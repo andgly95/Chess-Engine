@@ -448,7 +448,14 @@ export class ChessUI {
     } else {
       // Piece symbol (except for pawns)
       if (move.piece !== 'pawn') {
-        notation += move.piece[0].toUpperCase();
+        const pieceNotation: Record<string, string> = {
+          'knight': 'N',
+          'bishop': 'B',
+          'rook': 'R',
+          'queen': 'Q',
+          'king': 'K'
+        };
+        notation += pieceNotation[move.piece];
       }
 
       // Capture notation
@@ -464,7 +471,13 @@ export class ChessUI {
 
       // Promotion
       if (move.promotionTo) {
-        notation += '=' + move.promotionTo[0].toUpperCase();
+        const promotionNotation: Record<string, string> = {
+          'knight': 'N',
+          'bishop': 'B',
+          'rook': 'R',
+          'queen': 'Q'
+        };
+        notation += '=' + promotionNotation[move.promotionTo];
       }
     }
 
