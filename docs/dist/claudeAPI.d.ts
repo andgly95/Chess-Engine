@@ -49,6 +49,10 @@ export declare class ClaudeAPI {
      */
     private buildMoveAnalysisPrompt;
     /**
+     * Get tool definition for structured output
+     */
+    private getAnalysisTool;
+    /**
      * Call Claude API through proxy
      */
     private callClaudeAPI;

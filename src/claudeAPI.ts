@@ -150,7 +150,7 @@ Game State:
 - Current position (FEN): ${fen}
 - Move history (PGN): ${historyPGN}
 
-Please analyze this move and provide:
+Analyze this move and provide:
 
 1. **Move Explanation** (2-3 sentences): Explain what this move accomplishes, its immediate purpose, and whether it's a good or bad move.
 
@@ -158,18 +158,41 @@ Please analyze this move and provide:
 
 3. **Strategic Plan** (1-2 sentences): What should the opponent consider in response? What's the best continuation?
 
-Keep your response concise, educational, and friendly. Focus on helping a player understand chess principles.
+Keep your response concise, educational, and friendly. Focus on helping a player understand chess principles.`;
+  }
 
-Format your response as:
-EXPLANATION: [your explanation]
-TACTICS: [tactical analysis]
-STRATEGY: [strategic recommendation]`;
+  /**
+   * Get tool definition for structured output
+   */
+  private getAnalysisTool() {
+    return {
+      name: "provide_chess_analysis",
+      description: "Provide structured analysis of a chess move including explanation, tactical analysis, and strategic recommendations",
+      input_schema: {
+        type: "object",
+        properties: {
+          moveExplanation: {
+            type: "string",
+            description: "2-3 sentence explanation of what the move accomplishes, its purpose, and whether it's good or bad"
+          },
+          tacticalAnalysis: {
+            type: "string",
+            description: "1-2 sentence analysis of tactical threats, opportunities, or vulnerabilities created by this move"
+          },
+          strategicPlan: {
+            type: "string",
+            description: "1-2 sentence recommendation for what the opponent should consider in response and best continuation"
+          }
+        },
+        required: ["moveExplanation", "tacticalAnalysis", "strategicPlan"]
+      }
+    };
   }
 
   /**
    * Call Claude API through proxy
    */
-  private async callClaudeAPI(prompt: string): Promise<string> {
+  private async callClaudeAPI(prompt: string): Promise<any> {
     if (!this.config) {
       throw new Error('API not configured');
     }
@@ -182,7 +205,9 @@ STRATEGY: [strategic recommendation]`;
         },
         body: JSON.stringify({
           apiKey: this.config.apiKey,
-          prompt: prompt
+          prompt: prompt,
+          tools: [this.getAnalysisTool()],
+          tool_choice: { type: "tool", name: "provide_chess_analysis" }
         })
       });
 
@@ -202,7 +227,18 @@ STRATEGY: [strategic recommendation]`;
       }
 
       const data = await response.json();
-      return data.content[0].text;
+
+      // Handle tool use response
+      if (data.content && data.content[0]?.type === 'tool_use') {
+        return data.content[0].input;
+      }
+
+      // Fallback to text response for backward compatibility
+      if (data.content && data.content[0]?.text) {
+        return { text: data.content[0].text };
+      }
+
+      return data;
     } catch (error) {
       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
         throw new Error(
@@ -218,15 +254,35 @@ STRATEGY: [strategic recommendation]`;
   /**
    * Parse Claude's response
    */
-  private parseMoveAnalysis(response: string): ClaudeAnalysisResponse {
-    const explanationMatch = response.match(/EXPLANATION:\s*(.+?)(?=TACTICS:|$)/s);
-    const tacticsMatch = response.match(/TACTICS:\s*(.+?)(?=STRATEGY:|$)/s);
-    const strategyMatch = response.match(/STRATEGY:\s*(.+?)$/s);
+  private parseMoveAnalysis(response: any): ClaudeAnalysisResponse {
+    // Handle structured output from tool use
+    if (response.moveExplanation && response.tacticalAnalysis && response.strategicPlan) {
+      return {
+        moveExplanation: response.moveExplanation,
+        tacticalAnalysis: response.tacticalAnalysis,
+        strategicPlan: response.strategicPlan
+      };
+    }
 
+    // Fallback: Handle old text-based format for backward compatibility
+    if (typeof response === 'string' || response.text) {
+      const text = typeof response === 'string' ? response : response.text;
+      const explanationMatch = text.match(/EXPLANATION:\s*(.+?)(?=TACTICS:|$)/s);
+      const tacticsMatch = text.match(/TACTICS:\s*(.+?)(?=STRATEGY:|$)/s);
+      const strategyMatch = text.match(/STRATEGY:\s*(.+?)$/s);
+
+      return {
+        moveExplanation: explanationMatch?.[1]?.trim() || text.substring(0, 300),
+        tacticalAnalysis: tacticsMatch?.[1]?.trim() || '',
+        strategicPlan: strategyMatch?.[1]?.trim() || ''
+      };
+    }
+
+    // Default fallback
     return {
-      moveExplanation: explanationMatch?.[1]?.trim() || response.substring(0, 300),
-      tacticalAnalysis: tacticsMatch?.[1]?.trim() || '',
-      strategicPlan: strategyMatch?.[1]?.trim() || ''
+      moveExplanation: 'Unable to parse response',
+      tacticalAnalysis: '',
+      strategicPlan: ''
     };
   }
 
@@ -302,7 +358,14 @@ STRATEGY: [strategic recommendation]`;
     }
 
     if (move.piece !== 'pawn') {
-      notation += move.piece[0].toUpperCase();
+      const pieceNotation: Record<string, string> = {
+        'knight': 'N',
+        'bishop': 'B',
+        'rook': 'R',
+        'queen': 'Q',
+        'king': 'K'
+      };
+      notation += pieceNotation[move.piece];
     }
 
     if (move.captured || move.isEnPassant) {
@@ -315,7 +378,13 @@ STRATEGY: [strategic recommendation]`;
     notation += toFile + toRank;
 
     if (move.promotionTo) {
-      notation += '=' + move.promotionTo[0].toUpperCase();
+      const promotionNotation: Record<string, string> = {
+        'knight': 'N',
+        'bishop': 'B',
+        'rook': 'R',
+        'queen': 'Q'
+      };
+      notation += '=' + promotionNotation[move.promotionTo];
     }
 
     if (move.isCheckmate) {

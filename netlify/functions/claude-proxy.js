@@ -28,7 +28,7 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const { apiKey, prompt } = JSON.parse(event.body || '{}');
+    const { apiKey, prompt, tools, tool_choice } = JSON.parse(event.body || '{}');
 
     if (!apiKey || !prompt) {
       return {
@@ -41,7 +41,27 @@ exports.handler = async (event, context) => {
       };
     }
 
-    console.log('Calling Claude API...');
+    console.log('Calling Claude API...', { hasTools: !!tools, hasToolChoice: !!tool_choice });
+
+    // Build the request body
+    const requestBody = {
+      model: 'claude-sonnet-4-5-20250929',
+      max_tokens: 1024,
+      messages: [
+        {
+          role: 'user',
+          content: prompt
+        }
+      ]
+    };
+
+    // Add tools and tool_choice if provided (for structured outputs)
+    if (tools && tools.length > 0) {
+      requestBody.tools = tools;
+    }
+    if (tool_choice) {
+      requestBody.tool_choice = tool_choice;
+    }
 
     // Call Claude API
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -51,16 +71,7 @@ exports.handler = async (event, context) => {
         'x-api-key': apiKey,
         'anthropic-version': '2023-06-01'
       },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-5-20250929',
-        max_tokens: 1024,
-        messages: [
-          {
-            role: 'user',
-            content: prompt
-          }
-        ]
-      })
+      body: JSON.stringify(requestBody)
     });
 
     const data = await response.json();
