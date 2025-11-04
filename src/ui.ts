@@ -116,28 +116,58 @@ export class ChessUI {
     const apiKeyInput = document.getElementById('api-key-input') as HTMLInputElement;
     const apiStatus = document.getElementById('api-status');
 
+    console.log('Setting up API key button...', { saveApiKeyBtn, apiKeyInput, apiStatus });
+
     if (saveApiKeyBtn && apiKeyInput && apiStatus) {
-      saveApiKeyBtn.addEventListener('click', () => {
+      saveApiKeyBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Save API key button clicked!');
+
         const apiKey = apiKeyInput.value.trim();
+        console.log('API Key length:', apiKey.length);
+
         if (apiKey) {
           this.coach.getClaudeAPI().setConfig(apiKey);
           const statusText = apiStatus.querySelector('.status-text');
           if (statusText) {
-            statusText.textContent = `API Key saved: ${this.coach.getClaudeAPI().getApiKeyPreview()}`;
+            statusText.textContent = `✓ API Key saved: ${this.coach.getClaudeAPI().getApiKeyPreview()}`;
             statusText.className = 'status-text success';
           }
           apiKeyInput.value = '';
+          apiKeyInput.placeholder = 'API Key saved successfully!';
+
+          // Visual feedback
+          saveApiKeyBtn.textContent = 'Saved!';
+          setTimeout(() => {
+            saveApiKeyBtn.textContent = 'Save';
+          }, 2000);
+
+          console.log('API key saved successfully!');
+        } else {
+          const statusText = apiStatus.querySelector('.status-text');
+          if (statusText) {
+            statusText.textContent = 'Please enter an API key';
+            statusText.className = 'status-text error';
+          }
         }
       });
 
       // Load existing API key status
-      const claudeAPI = this.coach.getClaudeAPI();
-      if (claudeAPI.isConfigured()) {
-        const statusText = apiStatus.querySelector('.status-text');
-        if (statusText) {
-          statusText.textContent = `API Key configured: ${claudeAPI.getApiKeyPreview()}`;
-          statusText.className = 'status-text success';
-        }
+      this.updateApiKeyStatus();
+    } else {
+      console.error('Could not find API key elements:', { saveApiKeyBtn, apiKeyInput, apiStatus });
+    }
+  }
+
+  private updateApiKeyStatus(): void {
+    const apiStatus = document.getElementById('api-status');
+    const claudeAPI = this.coach.getClaudeAPI();
+
+    if (apiStatus && claudeAPI.isConfigured()) {
+      const statusText = apiStatus.querySelector('.status-text');
+      if (statusText) {
+        statusText.textContent = `✓ API Key configured: ${claudeAPI.getApiKeyPreview()}`;
+        statusText.className = 'status-text success';
       }
     }
   }
@@ -147,6 +177,7 @@ export class ChessUI {
     this.renderStatus();
     this.renderMoveHistory();
     this.renderGuide();
+    this.updateApiKeyStatus();
 
     // Check for pending promotion
     if (this.game.hasPendingPromotion()) {

@@ -16,6 +16,7 @@ export declare class ChessUI {
     private isGuideVisible;
     constructor(game: ChessGame);
     private setupEventListeners;
+    private updateApiKeyStatus;
     render(): void;
     private renderBoard;
     private handleSquareClick;

@@ -12,12 +12,14 @@ export class ClaudeAPI {
      * Set the API configuration
      */
     setConfig(apiKey, model, maxTokens) {
+        console.log('Setting API config...', { keyLength: apiKey.length });
         this.config = {
             apiKey,
             model: model || this.DEFAULT_MODEL,
             maxTokens: maxTokens || this.DEFAULT_MAX_TOKENS
         };
         this.saveConfig();
+        console.log('API config saved. isConfigured:', this.isConfigured());
     }
     /**
      * Check if API is configured
@@ -45,7 +47,9 @@ export class ClaudeAPI {
      */
     saveConfig() {
         if (this.config) {
-            localStorage.setItem('chess_claude_config', JSON.stringify(this.config));
+            const configString = JSON.stringify(this.config);
+            localStorage.setItem('chess_claude_config', configString);
+            console.log('Config saved to localStorage:', { keyPreview: this.getApiKeyPreview() });
         }
     }
     /**
@@ -53,9 +57,11 @@ export class ClaudeAPI {
      */
     loadConfig() {
         const saved = localStorage.getItem('chess_claude_config');
+        console.log('Loading config from localStorage:', saved ? 'Found' : 'Not found');
         if (saved) {
             try {
                 this.config = JSON.parse(saved);
+                console.log('Config loaded successfully:', { keyPreview: this.getApiKeyPreview() });
             }
             catch (e) {
                 console.error('Failed to load API config:', e);
