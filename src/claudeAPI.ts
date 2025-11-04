@@ -22,7 +22,7 @@ export class ClaudeAPI {
   private readonly API_URL = window.location.hostname === 'localhost'
     ? 'http://localhost:3001/api/claude'  // Local development
     : '/.netlify/functions/claude-proxy'; // Production (Netlify)
-  private readonly DEFAULT_MODEL = 'claude-3-5-sonnet-20241022';
+  private readonly DEFAULT_MODEL = 'claude-sonnet-4-5-20250929';
   private readonly DEFAULT_MAX_TOKENS = 1024;
 
   constructor() {

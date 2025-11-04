@@ -1,14 +1,29 @@
 // Netlify Serverless Function - Proxy for Claude API
-// This file should be deployed to handle API calls securely
+// This avoids CORS issues by proxying requests from the backend
 
-import { Handler } from '@netlify/functions';
-
-const handler: Handler = async (event, context) => {
+exports.handler = async (event, context) => {
   // Only allow POST requests
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({ error: 'Method not allowed' })
+    };
+  }
+
+  // Handle preflight CORS requests
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+      },
+      body: ''
     };
   }
 
@@ -18,9 +33,15 @@ const handler: Handler = async (event, context) => {
     if (!apiKey || !prompt) {
       return {
         statusCode: 400,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ error: 'Missing apiKey or prompt' })
       };
     }
+
+    console.log('Calling Claude API...');
 
     // Call Claude API
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -31,7 +52,7 @@ const handler: Handler = async (event, context) => {
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-sonnet-4-5-20250929',
         max_tokens: 1024,
         messages: [
           {
@@ -45,8 +66,13 @@ const handler: Handler = async (event, context) => {
     const data = await response.json();
 
     if (!response.ok) {
+      console.error('Claude API error:', data);
       return {
         statusCode: response.status,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ error: data })
       };
     }
@@ -60,14 +86,17 @@ const handler: Handler = async (event, context) => {
       body: JSON.stringify(data)
     };
   } catch (error) {
+    console.error('Function error:', error);
     return {
       statusCode: 500,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({
         error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: error.message || 'Unknown error'
       })
     };
   }
 };
-
-export { handler };

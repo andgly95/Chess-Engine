@@ -7,7 +7,7 @@ export class ClaudeAPI {
         this.API_URL = window.location.hostname === 'localhost'
             ? 'http://localhost:3001/api/claude' // Local development
             : '/.netlify/functions/claude-proxy'; // Production (Netlify)
-        this.DEFAULT_MODEL = 'claude-3-5-sonnet-20241022';
+        this.DEFAULT_MODEL = 'claude-sonnet-4-5-20250929';
         this.DEFAULT_MAX_TOKENS = 1024;
         // Try to load API key from localStorage
         this.loadConfig();
