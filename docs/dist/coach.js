@@ -120,6 +120,7 @@ export class ChessCoach {
         }
         const moveSequence = this.convertMovesToNotation(moveHistory);
         const detectedOpening = this.detectOpening(moveSequence);
+        const progression = this.buildOpeningProgression(moveHistory, moveSequence);
         if (detectedOpening) {
             return {
                 openingName: detectedOpening.name,
@@ -128,7 +129,8 @@ export class ChessCoach {
                 opponentDefense: this.getPlayerOpeningType(moveHistory, 'black'),
                 suggestedMoves: detectedOpening.nextMoves || this.getGeneralSuggestions(moveHistory),
                 strategyTips: detectedOpening.tips || this.getGeneralTips(moveHistory.length),
-                isInBook: true
+                isInBook: true,
+                openingProgression: progression
             };
         }
         return {
@@ -138,8 +140,33 @@ export class ChessCoach {
             opponentDefense: this.getPlayerOpeningType(moveHistory, 'black'),
             suggestedMoves: this.getGeneralSuggestions(moveHistory),
             strategyTips: this.getGeneralTips(moveHistory.length),
-            isInBook: false
+            isInBook: false,
+            openingProgression: progression
         };
+    }
+    /**
+     * Build opening progression for first 5 moves
+     */
+    buildOpeningProgression(moveHistory, moveSequence) {
+        const progression = [];
+        const maxMoves = Math.min(10, moveHistory.length); // First 10 moves (5 for each side)
+        for (let i = 1; i <= maxMoves; i++) {
+            const partialSequence = moveSequence.slice(0, i);
+            const opening = this.detectOpening(partialSequence);
+            // Convert move to algebraic notation for display
+            const move = moveHistory[i - 1];
+            const fromFile = String.fromCharCode(97 + move.from.col);
+            const fromRank = 8 - move.from.row;
+            const toFile = String.fromCharCode(97 + move.to.col);
+            const toRank = 8 - move.to.row;
+            const movePlayed = `${toFile}${toRank}`;
+            progression.push({
+                moveNumber: i,
+                openingName: opening ? opening.name : '',
+                movePlayed: movePlayed
+            });
+        }
+        return progression;
     }
     /**
      * Convert move history to algebraic notation for matching
@@ -229,7 +256,8 @@ export class ChessCoach {
                 'Don\'t move the same piece twice in opening',
                 'Connect your rooks'
             ],
-            isInBook: true
+            isInBook: true,
+            openingProgression: []
         };
     }
     /**

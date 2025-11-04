@@ -648,6 +648,9 @@ export class ChessUI {
       opponentDefenseEl.textContent = analysis.opponentDefense;
     }
 
+    // Render opening progression (first 10 moves)
+    this.renderOpeningProgression(analysis.openingProgression);
+
     // Don't update suggested moves or strategy tips here - they come from Claude AI
     // Only show initial fallback if no Claude data is available yet
     if (moveHistory.length === 0) {
@@ -659,6 +662,51 @@ export class ChessUI {
     if (moveHistory.length > 0) {
       this.analyzeMoveWithClaude(moveHistory);
     }
+  }
+
+  private renderOpeningProgression(progression: any[]): void {
+    const containerEl = document.getElementById('opening-progression-container') as HTMLElement;
+    const progressionEl = document.getElementById('opening-progression');
+
+    if (!containerEl || !progressionEl) return;
+
+    // Hide if no progression data
+    if (!progression || progression.length === 0) {
+      containerEl.style.display = 'none';
+      return;
+    }
+
+    // Show container
+    containerEl.style.display = 'block';
+
+    // Clear and populate progression
+    progressionEl.innerHTML = '';
+    progression.forEach((item) => {
+      const itemEl = document.createElement('div');
+      itemEl.className = 'progression-item';
+
+      const numberEl = document.createElement('div');
+      numberEl.className = 'progression-number';
+      numberEl.textContent = item.moveNumber.toString();
+
+      const moveEl = document.createElement('div');
+      moveEl.className = 'progression-move';
+      moveEl.textContent = item.movePlayed;
+
+      const openingEl = document.createElement('div');
+      openingEl.className = 'progression-opening';
+      if (item.openingName) {
+        openingEl.textContent = item.openingName;
+      } else {
+        openingEl.textContent = 'Developing position...';
+        openingEl.classList.add('empty');
+      }
+
+      itemEl.appendChild(numberEl);
+      itemEl.appendChild(moveEl);
+      itemEl.appendChild(openingEl);
+      progressionEl.appendChild(itemEl);
+    });
   }
 
   private async analyzeMoveWithClaude(moveHistory: Move[]): Promise<void> {

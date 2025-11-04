@@ -8,6 +8,11 @@ export interface OpeningInfo {
     nextMoves?: string[];
     tips?: string[];
 }
+export interface OpeningProgression {
+    moveNumber: number;
+    openingName: string;
+    movePlayed: string;
+}
 export interface CoachAnalysis {
     openingName: string;
     openingDescription: string;
@@ -16,6 +21,7 @@ export interface CoachAnalysis {
     suggestedMoves: string[];
     strategyTips: string[];
     isInBook: boolean;
+    openingProgression: OpeningProgression[];
 }
 export declare class ChessCoach {
     private claudeAPI;
@@ -29,6 +35,10 @@ export declare class ChessCoach {
      * Analyze the current game state and provide coaching guidance
      */
     analyzePosition(moveHistory: Move[]): CoachAnalysis;
+    /**
+     * Build opening progression for first 5 moves
+     */
+    private buildOpeningProgression;
     /**
      * Convert move history to algebraic notation for matching
      */
