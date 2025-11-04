@@ -2,6 +2,7 @@
 
 import { Move, Color, Board } from './types.js';
 import { ClaudeAPI, ClaudeAnalysisResponse } from './claudeAPI.js';
+import { StockfishEngine, StockfishAnalysis } from './stockfish.js';
 
 export interface OpeningInfo {
   name: string;
@@ -31,6 +32,7 @@ export interface CoachAnalysis {
 
 export class ChessCoach {
   private claudeAPI: ClaudeAPI;
+  private stockfish: StockfishEngine;
   private openingsDatabase: OpeningInfo[] = [
     // King's Pawn Openings (e4) - Progressive depth
     {
@@ -271,6 +273,7 @@ export class ChessCoach {
 
   constructor() {
     this.claudeAPI = new ClaudeAPI();
+    this.stockfish = new StockfishEngine();
   }
 
   /**
@@ -278,6 +281,13 @@ export class ChessCoach {
    */
   getClaudeAPI(): ClaudeAPI {
     return this.claudeAPI;
+  }
+
+  /**
+   * Get Stockfish engine instance
+   */
+  getStockfish(): StockfishEngine {
+    return this.stockfish;
   }
 
   /**
@@ -497,7 +507,25 @@ export class ChessCoach {
   }
 
   /**
-   * Get Claude AI analysis of the last move
+   * Get Stockfish analysis of current position
+   */
+  async getStockfishAnalysis(
+    boardState: Board,
+    currentTurn: Color,
+    moveHistory: Move[]
+  ): Promise<StockfishAnalysis | null> {
+    try {
+      const fen = this.stockfish.boardToFEN(boardState, currentTurn, moveHistory);
+      const analysis = await this.stockfish.analyzePosition(fen, 15, 1000);
+      return analysis;
+    } catch (error) {
+      console.error('Stockfish analysis error:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get Claude AI analysis of the last move (now enhanced with Stockfish)
    */
   async analyzeLastMove(
     lastMove: Move,
@@ -505,6 +533,16 @@ export class ChessCoach {
     boardState: Board,
     currentTurn: Color
   ): Promise<ClaudeAnalysisResponse> {
-    return await this.claudeAPI.analyzeMove(lastMove, moveHistory, boardState, currentTurn);
+    // Get Stockfish analysis for the next player's move options
+    const stockfishAnalysis = await this.getStockfishAnalysis(boardState, currentTurn, moveHistory);
+
+    // Pass Stockfish analysis to Claude for explanation
+    return await this.claudeAPI.analyzeMove(
+      lastMove,
+      moveHistory,
+      boardState,
+      currentTurn,
+      stockfishAnalysis
+    );
   }
 }

@@ -8,10 +8,17 @@
     "watch": "tsc --watch",
     "serve": "python3 -m http.server 8000"
   },
-  "keywords": ["chess", "game", "typescript"],
+  "keywords": [
+    "chess",
+    "game",
+    "typescript"
+  ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "stockfish": "^17.1.0"
   }
 }

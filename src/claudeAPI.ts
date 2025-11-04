@@ -1,6 +1,7 @@
 // Claude API Integration for Chess Analysis
 
 import { Board, Move, Color } from './types.js';
+import { StockfishAnalysis } from './stockfish.js';
 
 export interface ClaudeConfig {
   apiKey: string;
@@ -145,7 +146,8 @@ export class ClaudeAPI {
     lastMove: Move,
     moveHistory: Move[],
     boardState: Board,
-    currentTurn: Color
+    currentTurn: Color,
+    stockfishAnalysis?: StockfishAnalysis | null
   ): Promise<ClaudeAnalysisResponse> {
     if (!this.isConfigured()) {
       return {
@@ -167,9 +169,9 @@ export class ClaudeAPI {
     }
 
     try {
-      const prompt = this.buildMoveAnalysisPrompt(lastMove, moveHistory, boardState, currentTurn);
+      const prompt = this.buildMoveAnalysisPrompt(lastMove, moveHistory, boardState, currentTurn, stockfishAnalysis);
       const response = await this.callClaudeAPI(prompt);
-      const analysis = this.parseMoveAnalysis(response);
+      const analysis = this.parseMoveAnalysis(response, stockfishAnalysis);
 
       // Cache the response
       this.responseCache.set(cacheKey, analysis);
@@ -197,7 +199,8 @@ export class ClaudeAPI {
     lastMove: Move,
     moveHistory: Move[],
     boardState: Board,
-    currentTurn: Color
+    currentTurn: Color,
+    stockfishAnalysis?: StockfishAnalysis | null
   ): string {
     const fen = this.boardToFEN(boardState, currentTurn);
     const moveNotation = this.moveToAlgebraic(lastMove);
@@ -206,12 +209,32 @@ export class ClaudeAPI {
 
     const historyPGN = this.movesToPGN(moveHistory);
 
-    return `You are an expert chess coach analyzing a game.
+    // Build Stockfish suggestions section
+    let stockfishSection = '';
+    if (stockfishAnalysis && stockfishAnalysis.bestMoves.length > 0) {
+      stockfishSection = '\n\n**Stockfish Top Moves:**\n';
+      stockfishAnalysis.bestMoves.slice(0, 5).forEach((move, index) => {
+        const evalStr = move.mate !== undefined
+          ? `Mate in ${Math.abs(move.mate)}`
+          : `${(move.score / 100).toFixed(1)} pawns`;
+
+        // Convert UCI to readable format
+        const from = move.move.substring(0, 2);
+        const to = move.move.substring(2, 4);
+        const promotion = move.move[4] ? `=${move.move[4].toUpperCase()}` : '';
+        const moveStr = `${from}-${to}${promotion}`;
+
+        stockfishSection += `${index + 1}. ${moveStr} (${evalStr})\n`;
+      });
+      stockfishSection += `\nPosition Evaluation: ${(stockfishAnalysis.evaluation / 100).toFixed(1)} (positive = white advantage)`;
+    }
+
+    const basePrompt = `You are an expert chess coach analyzing a game.
 
 Game State:
 - Move ${moveNumber}: ${moveColor} just played ${moveNotation}
 - Current position (FEN): ${fen}
-- Move history (PGN): ${historyPGN}
+- Move history (PGN): ${historyPGN}${stockfishSection}
 
 Analyze this move and provide:
 
@@ -219,13 +242,26 @@ Analyze this move and provide:
 
 2. **Tactical Elements** (1-2 sentences): Are there any tactical threats, opportunities, or vulnerabilities created by this move?
 
-3. **Strategic Plan** (1-2 sentences): What should the opponent consider in response? What's the best continuation?
+3. **Strategic Plan** (1-2 sentences): What should ${currentTurn} consider in response? What's the best continuation?`;
 
-4. **Suggested Moves** (2-4 moves): Provide specific chess moves in algebraic notation that the opponent should consider. Use proper notation (N for knight, B for bishop, R for rook, Q for queen, K for king).
+    // Adjust suggested moves section based on whether we have Stockfish
+    if (stockfishSection) {
+      return basePrompt + `
+
+4. **Suggested Moves** (2-4 moves): Using the Stockfish analysis above, explain in simple chess notation (like "Nf3", "d4", etc.) why the top moves are good. Convert the UCI notation above to proper algebraic notation.
 
 5. **Strategy Tips** (2-4 tips): Provide practical strategic principles or tips relevant to this position.
 
 Keep your response concise, educational, and friendly. Focus on helping a player understand chess principles.`;
+    } else {
+      return basePrompt + `
+
+4. **Suggested Moves** (2-4 moves): Provide specific chess moves in algebraic notation that ${currentTurn} should consider. Use proper notation (N for knight, B for bishop, R for rook, Q for queen, K for king).
+
+5. **Strategy Tips** (2-4 tips): Provide practical strategic principles or tips relevant to this position.
+
+Keep your response concise, educational, and friendly. Focus on helping a player understand chess principles.`;
+    }
   }
 
   /**
@@ -335,14 +371,28 @@ Keep your response concise, educational, and friendly. Focus on helping a player
   /**
    * Parse Claude's response
    */
-  private parseMoveAnalysis(response: any): ClaudeAnalysisResponse {
+  private parseMoveAnalysis(response: any, stockfishAnalysis?: StockfishAnalysis | null): ClaudeAnalysisResponse {
     // Handle structured output from tool use
     if (response.moveExplanation && response.tacticalAnalysis && response.strategicPlan) {
+      let suggestedMoves = response.suggestedMoves || [];
+
+      // If we have Stockfish analysis and Claude didn't provide moves, use Stockfish moves
+      if (suggestedMoves.length === 0 && stockfishAnalysis && stockfishAnalysis.bestMoves.length > 0) {
+        suggestedMoves = stockfishAnalysis.bestMoves.slice(0, 4).map(move => {
+          const from = move.move.substring(0, 2);
+          const to = move.move.substring(2, 4);
+          const evalStr = move.mate !== undefined
+            ? `(M${Math.abs(move.mate)})`
+            : `(${(move.score / 100).toFixed(1)})`;
+          return `${from}-${to} ${evalStr}`;
+        });
+      }
+
       return {
         moveExplanation: response.moveExplanation,
         tacticalAnalysis: response.tacticalAnalysis,
         strategicPlan: response.strategicPlan,
-        suggestedMoves: response.suggestedMoves || [],
+        suggestedMoves: suggestedMoves,
         strategyTips: response.strategyTips || []
       };
     }
