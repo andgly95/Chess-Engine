@@ -1,6 +1,7 @@
 // Chess Coach - Opening detection and move suggestions
 
-import { Move, Color } from './types.js';
+import { Move, Color, Board } from './types.js';
+import { ClaudeAPI, ClaudeAnalysisResponse } from './claudeAPI.js';
 
 export interface OpeningInfo {
   name: string;
@@ -22,6 +23,7 @@ export interface CoachAnalysis {
 }
 
 export class ChessCoach {
+  private claudeAPI: ClaudeAPI;
   private openingsDatabase: OpeningInfo[] = [
     // King's Pawn Openings (e4)
     {
@@ -125,6 +127,17 @@ export class ChessCoach {
       tips: ['Very flexible', 'Control center with pieces', 'Can transpose to d4 or c4 systems']
     }
   ];
+
+  constructor() {
+    this.claudeAPI = new ClaudeAPI();
+  }
+
+  /**
+   * Get Claude API instance for configuration
+   */
+  getClaudeAPI(): ClaudeAPI {
+    return this.claudeAPI;
+  }
 
   /**
    * Analyze the current game state and provide coaching guidance
@@ -310,12 +323,14 @@ export class ChessCoach {
   }
 
   /**
-   * Placeholder for Claude AI integration
-   * This will be connected to Claude API for advanced analysis
+   * Get Claude AI analysis of the last move
    */
-  async getClaudeAnalysis(moveHistory: Move[], position: string): Promise<string> {
-    // TODO: Integrate with Claude API
-    // This is where we'll send the position to Claude for deep analysis
-    return 'Claude AI analysis will be integrated here';
+  async analyzeLastMove(
+    lastMove: Move,
+    moveHistory: Move[],
+    boardState: Board,
+    currentTurn: Color
+  ): Promise<ClaudeAnalysisResponse> {
+    return await this.claudeAPI.analyzeMove(lastMove, moveHistory, boardState, currentTurn);
   }
 }

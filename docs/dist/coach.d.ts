@@ -1,4 +1,5 @@
-import { Move } from './types.js';
+import { Move, Color, Board } from './types.js';
+import { ClaudeAPI, ClaudeAnalysisResponse } from './claudeAPI.js';
 export interface OpeningInfo {
     name: string;
     moves: string[];
@@ -17,7 +18,13 @@ export interface CoachAnalysis {
     isInBook: boolean;
 }
 export declare class ChessCoach {
+    private claudeAPI;
     private openingsDatabase;
+    constructor();
+    /**
+     * Get Claude API instance for configuration
+     */
+    getClaudeAPI(): ClaudeAPI;
     /**
      * Analyze the current game state and provide coaching guidance
      */
@@ -51,8 +58,7 @@ export declare class ChessCoach {
      */
     private getGeneralTips;
     /**
-     * Placeholder for Claude AI integration
-     * This will be connected to Claude API for advanced analysis
+     * Get Claude AI analysis of the last move
      */
-    getClaudeAnalysis(moveHistory: Move[], position: string): Promise<string>;
+    analyzeLastMove(lastMove: Move, moveHistory: Move[], boardState: Board, currentTurn: Color): Promise<ClaudeAnalysisResponse>;
 }

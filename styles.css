@@ -526,6 +526,136 @@ header h1 {
   margin-bottom: 0;
 }
 
+/* Last Move Analysis */
+.last-move-analysis {
+  min-height: 60px;
+}
+
+.analysis-loading {
+  padding: 15px;
+  text-align: center;
+  color: #667eea;
+  font-weight: 600;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.move-explanation {
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 5px;
+  font-size: 0.95rem;
+  color: #333;
+  line-height: 1.6;
+  min-height: 60px;
+}
+
+.move-explanation.ai-response {
+  background: #e7f5ff;
+  border-left: 4px solid #339af0;
+}
+
+/* AI Settings */
+.ai-settings {
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 5px;
+}
+
+.setting-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.setting-item label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #495057;
+}
+
+.api-key-input {
+  padding: 8px 12px;
+  border: 2px solid #dee2e6;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  font-family: 'Courier New', monospace;
+  transition: border-color 0.2s ease;
+}
+
+.api-key-input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.btn-small {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-small:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+.btn-small:active {
+  transform: translateY(0);
+}
+
+.setting-status {
+  padding: 8px 12px;
+  background: white;
+  border-radius: 5px;
+  margin-bottom: 8px;
+}
+
+.status-text {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.status-text.success {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.status-text.error {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+.setting-help {
+  padding-top: 8px;
+  border-top: 1px solid #dee2e6;
+}
+
+.setting-help small {
+  font-size: 0.8rem;
+  color: #6c757d;
+  line-height: 1.4;
+}
+
+.setting-help a {
+  color: #667eea;
+  text-decoration: none;
+}
+
+.setting-help a:hover {
+  text-decoration: underline;
+}
+
 @media (max-width: 768px) {
   .chess-board {
     grid-template-columns: repeat(8, 50px);

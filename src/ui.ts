@@ -110,6 +110,36 @@ export class ChessUI {
         }
       });
     }
+
+    // Setup API key save button
+    const saveApiKeyBtn = document.getElementById('save-api-key');
+    const apiKeyInput = document.getElementById('api-key-input') as HTMLInputElement;
+    const apiStatus = document.getElementById('api-status');
+
+    if (saveApiKeyBtn && apiKeyInput && apiStatus) {
+      saveApiKeyBtn.addEventListener('click', () => {
+        const apiKey = apiKeyInput.value.trim();
+        if (apiKey) {
+          this.coach.getClaudeAPI().setConfig(apiKey);
+          const statusText = apiStatus.querySelector('.status-text');
+          if (statusText) {
+            statusText.textContent = `API Key saved: ${this.coach.getClaudeAPI().getApiKeyPreview()}`;
+            statusText.className = 'status-text success';
+          }
+          apiKeyInput.value = '';
+        }
+      });
+
+      // Load existing API key status
+      const claudeAPI = this.coach.getClaudeAPI();
+      if (claudeAPI.isConfigured()) {
+        const statusText = apiStatus.querySelector('.status-text');
+        if (statusText) {
+          statusText.textContent = `API Key configured: ${claudeAPI.getApiKeyPreview()}`;
+          statusText.className = 'status-text success';
+        }
+      }
+    }
   }
 
   render(): void {
@@ -450,6 +480,63 @@ export class ChessUI {
           ul.appendChild(li);
         });
       }
+    }
+
+    // Analyze last move with Claude AI
+    if (moveHistory.length > 0) {
+      this.analyzeMoveWithClaude(moveHistory);
+    }
+  }
+
+  private async analyzeMoveWithClaude(moveHistory: Move[]): Promise<void> {
+    const moveExplanationEl = document.getElementById('move-explanation');
+    const loadingEl = document.querySelector('.analysis-loading') as HTMLElement;
+
+    if (!moveExplanationEl || !loadingEl) return;
+
+    // Check if Claude API is configured
+    if (!this.coach.getClaudeAPI().isConfigured()) {
+      moveExplanationEl.textContent = 'Set your Claude API key below to enable AI move analysis.';
+      moveExplanationEl.className = 'move-explanation';
+      return;
+    }
+
+    const lastMove = moveHistory[moveHistory.length - 1];
+    const state = this.game.getState();
+
+    // Show loading
+    loadingEl.style.display = 'block';
+    moveExplanationEl.textContent = '';
+
+    try {
+      const analysis = await this.coach.analyzeLastMove(
+        lastMove,
+        moveHistory,
+        state.board,
+        state.currentTurn
+      );
+
+      // Hide loading
+      loadingEl.style.display = 'none';
+
+      if (analysis.error) {
+        moveExplanationEl.textContent = analysis.moveExplanation;
+        moveExplanationEl.className = 'move-explanation';
+      } else {
+        let fullAnalysis = analysis.moveExplanation;
+        if (analysis.tacticalAnalysis) {
+          fullAnalysis += '\n\n🎯 ' + analysis.tacticalAnalysis;
+        }
+        if (analysis.strategicPlan) {
+          fullAnalysis += '\n\n📋 ' + analysis.strategicPlan;
+        }
+        moveExplanationEl.textContent = fullAnalysis;
+        moveExplanationEl.className = 'move-explanation ai-response';
+      }
+    } catch (error) {
+      loadingEl.style.display = 'none';
+      moveExplanationEl.textContent = 'Error getting AI analysis. Please check your API key.';
+      moveExplanationEl.className = 'move-explanation';
     }
   }
 }

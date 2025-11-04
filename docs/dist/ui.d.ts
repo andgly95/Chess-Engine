@@ -28,4 +28,5 @@ export declare class ChessUI {
     private checkAIMove;
     private makeAIMove;
     private renderGuide;
+    private analyzeMoveWithClaude;
 }

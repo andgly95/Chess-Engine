@@ -1,4 +1,5 @@
 // Chess Coach - Opening detection and move suggestions
+import { ClaudeAPI } from './claudeAPI.js';
 export class ChessCoach {
     constructor() {
         this.openingsDatabase = [
@@ -102,6 +103,13 @@ export class ChessCoach {
                 tips: ['Very flexible', 'Control center with pieces', 'Can transpose to d4 or c4 systems']
             }
         ];
+        this.claudeAPI = new ClaudeAPI();
+    }
+    /**
+     * Get Claude API instance for configuration
+     */
+    getClaudeAPI() {
+        return this.claudeAPI;
     }
     /**
      * Analyze the current game state and provide coaching guidance
@@ -282,13 +290,10 @@ export class ChessCoach {
         }
     }
     /**
-     * Placeholder for Claude AI integration
-     * This will be connected to Claude API for advanced analysis
+     * Get Claude AI analysis of the last move
      */
-    async getClaudeAnalysis(moveHistory, position) {
-        // TODO: Integrate with Claude API
-        // This is where we'll send the position to Claude for deep analysis
-        return 'Claude AI analysis will be integrated here';
+    async analyzeLastMove(lastMove, moveHistory, boardState, currentTurn) {
+        return await this.claudeAPI.analyzeMove(lastMove, moveHistory, boardState, currentTurn);
     }
 }
 //# sourceMappingURL=coach.js.map
