@@ -529,6 +529,9 @@ header h1 {
 /* Last Move Analysis */
 .last-move-analysis {
   min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
 .analysis-loading {
@@ -544,6 +547,57 @@ header h1 {
   50% { opacity: 0.5; }
 }
 
+/* Analysis Cards */
+.analysis-card {
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s ease;
+}
+
+.analysis-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.analysis-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 15px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.analysis-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.analysis-card-header h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.analysis-card-content {
+  padding: 15px;
+  background: #f8f9fa;
+  font-size: 0.95rem;
+  color: #333;
+  line-height: 1.7;
+  min-height: 50px;
+}
+
+.analysis-card-content:empty::before {
+  content: 'Waiting for analysis...';
+  color: #adb5bd;
+  font-style: italic;
+}
+
+/* Keep old styles for backward compatibility */
 .move-explanation {
   padding: 12px;
   background: #f8f9fa;

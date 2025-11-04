@@ -227,18 +227,23 @@ export class ChessUI {
     }
 
     const analysis = this.moveAnalyses[this.currentAnalysisIndex];
-    const moveExplanationEl = document.getElementById('move-explanation');
 
+    // Update Move Explanation section
+    const moveExplanationEl = document.getElementById('move-explanation');
     if (moveExplanationEl) {
-      let fullAnalysis = analysis.explanation;
-      if (analysis.tacticalAnalysis) {
-        fullAnalysis += '\n\nTactical Analysis: ' + analysis.tacticalAnalysis;
-      }
-      if (analysis.strategicPlan) {
-        fullAnalysis += '\n\nStrategic Plan: ' + analysis.strategicPlan;
-      }
-      moveExplanationEl.textContent = fullAnalysis;
-      moveExplanationEl.className = 'move-explanation ai-response';
+      moveExplanationEl.textContent = analysis.explanation || 'No explanation available';
+    }
+
+    // Update Tactical Analysis section
+    const tacticalAnalysisEl = document.getElementById('tactical-analysis');
+    if (tacticalAnalysisEl) {
+      tacticalAnalysisEl.textContent = analysis.tacticalAnalysis || 'No tactical analysis available';
+    }
+
+    // Update Strategic Plan section
+    const strategicPlanEl = document.getElementById('strategic-plan');
+    if (strategicPlanEl) {
+      strategicPlanEl.textContent = analysis.strategicPlan || 'No strategic plan available';
     }
 
     // Update suggested moves and strategy tips for this analysis
@@ -658,14 +663,17 @@ export class ChessUI {
 
   private async analyzeMoveWithClaude(moveHistory: Move[]): Promise<void> {
     const moveExplanationEl = document.getElementById('move-explanation');
+    const tacticalAnalysisEl = document.getElementById('tactical-analysis');
+    const strategicPlanEl = document.getElementById('strategic-plan');
     const loadingEl = document.querySelector('.analysis-loading') as HTMLElement;
 
-    if (!moveExplanationEl || !loadingEl) return;
+    if (!moveExplanationEl || !tacticalAnalysisEl || !strategicPlanEl || !loadingEl) return;
 
     // Check if Claude API is configured
     if (!this.coach.getClaudeAPI().isConfigured()) {
       moveExplanationEl.textContent = 'Set your Claude API key below to enable AI move analysis.';
-      moveExplanationEl.className = 'move-explanation';
+      tacticalAnalysisEl.textContent = 'Configure API key to see tactical analysis';
+      strategicPlanEl.textContent = 'Configure API key to see strategic recommendations';
       return;
     }
 
@@ -694,9 +702,11 @@ export class ChessUI {
       return;
     }
 
-    // Show loading
+    // Show loading and clear previous content
     loadingEl.style.display = 'block';
     moveExplanationEl.textContent = '';
+    tacticalAnalysisEl.textContent = '';
+    strategicPlanEl.textContent = '';
 
     try {
       const analysis = await this.coach.analyzeLastMove(
@@ -730,12 +740,14 @@ export class ChessUI {
         this.updateClaudeSections(analysis);
       } else {
         moveExplanationEl.textContent = analysis.moveExplanation;
-        moveExplanationEl.className = 'move-explanation';
+        tacticalAnalysisEl.textContent = 'Error occurred during analysis';
+        strategicPlanEl.textContent = 'Error occurred during analysis';
       }
     } catch (error) {
       loadingEl.style.display = 'none';
       moveExplanationEl.textContent = 'Error getting AI analysis. Please check your API key.';
-      moveExplanationEl.className = 'move-explanation';
+      tacticalAnalysisEl.textContent = 'Analysis error';
+      strategicPlanEl.textContent = 'Analysis error';
     }
   }
 }
