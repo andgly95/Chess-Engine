@@ -1,6 +1,7 @@
 import { Color, GameState, Move, Position, Piece } from './types.js';
 export declare class ChessGame {
     private state;
+    private pendingPromotion;
     constructor();
     getState(): GameState;
     getCurrentTurn(): Color;
@@ -13,4 +14,7 @@ export declare class ChessGame {
     isGameOver(): boolean;
     getMoveHistory(): Move[];
     getGameStatus(): string;
+    hasPendingPromotion(): boolean;
+    getPendingPromotionColor(): Color | null;
+    completePromotion(pieceType: 'queen' | 'rook' | 'bishop' | 'knight'): void;
 }

@@ -22,6 +22,34 @@
           <div class="status-section">
             <h2>Game Status</h2>
             <div id="game-status" class="game-status"></div>
+
+            <div class="game-controls">
+              <div class="control-group">
+                <label for="game-mode">Game Mode:</label>
+                <select id="game-mode" class="control-select">
+                  <option value="pvp">Player vs Player</option>
+                  <option value="ai">Player vs AI</option>
+                </select>
+              </div>
+
+              <div class="control-group" id="ai-controls" style="display: none;">
+                <label for="ai-difficulty">AI Difficulty:</label>
+                <select id="ai-difficulty" class="control-select">
+                  <option value="easy">Easy</option>
+                  <option value="medium" selected>Medium</option>
+                  <option value="hard">Hard</option>
+                </select>
+              </div>
+
+              <div class="control-group">
+                <label for="player-color">You play as:</label>
+                <select id="player-color" class="control-select">
+                  <option value="white" selected>White</option>
+                  <option value="black">Black</option>
+                </select>
+              </div>
+            </div>
+
             <button id="new-game-btn" class="btn">New Game</button>
           </div>
 
@@ -32,6 +60,31 @@
         </div>
       </div>
     </main>
+  </div>
+
+  <!-- Pawn Promotion Modal -->
+  <div id="promotion-modal" class="modal">
+    <div class="modal-content">
+      <h2>Choose Promotion Piece</h2>
+      <div class="promotion-choices">
+        <div class="promotion-piece" data-piece="queen">
+          <span class="piece-symbol"></span>
+          <span class="piece-name">Queen</span>
+        </div>
+        <div class="promotion-piece" data-piece="rook">
+          <span class="piece-symbol"></span>
+          <span class="piece-name">Rook</span>
+        </div>
+        <div class="promotion-piece" data-piece="bishop">
+          <span class="piece-symbol"></span>
+          <span class="piece-name">Bishop</span>
+        </div>
+        <div class="promotion-piece" data-piece="knight">
+          <span class="piece-symbol"></span>
+          <span class="piece-name">Knight</span>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script type="module" src="dist/main.js"></script>

@@ -4,8 +4,13 @@ export declare class ChessUI {
     private boardElement;
     private statusElement;
     private historyElement;
+    private promotionModal;
     private selectedSquare;
     private validMoves;
+    private ai;
+    private isAIMode;
+    private playerColor;
+    private isAIThinking;
     constructor(game: ChessGame);
     private setupEventListeners;
     render(): void;
@@ -14,4 +19,9 @@ export declare class ChessUI {
     private renderStatus;
     private renderMoveHistory;
     private moveToNotation;
+    private showPromotionModal;
+    private hidePromotionModal;
+    private handlePromotionChoice;
+    private checkAIMove;
+    private makeAIMove;
 }

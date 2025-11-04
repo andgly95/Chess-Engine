@@ -1,14 +1,20 @@
 // UI Controller for the chess game
 import { ChessGame } from './game.js';
 import { getPieceSymbol, positionToNotation } from './board.js';
+import { ChessAI } from './ai.js';
 export class ChessUI {
     constructor(game) {
         this.selectedSquare = null;
         this.validMoves = [];
+        this.isAIMode = false;
+        this.playerColor = 'white';
+        this.isAIThinking = false;
         this.game = game;
         this.boardElement = document.getElementById('chess-board');
         this.statusElement = document.getElementById('game-status');
         this.historyElement = document.getElementById('move-history');
+        this.promotionModal = document.getElementById('promotion-modal');
+        this.ai = new ChessAI('medium');
         this.setupEventListeners();
         this.render();
     }
@@ -20,13 +26,61 @@ export class ChessUI {
                 this.selectedSquare = null;
                 this.validMoves = [];
                 this.render();
+                this.checkAIMove();
             });
         }
+        // Game mode selector
+        const gameModeSelect = document.getElementById('game-mode');
+        if (gameModeSelect) {
+            gameModeSelect.addEventListener('change', () => {
+                this.isAIMode = gameModeSelect.value === 'ai';
+                const aiControls = document.getElementById('ai-controls');
+                if (aiControls) {
+                    aiControls.style.display = this.isAIMode ? 'block' : 'none';
+                }
+                this.game = new ChessGame();
+                this.selectedSquare = null;
+                this.validMoves = [];
+                this.render();
+                this.checkAIMove();
+            });
+        }
+        // AI difficulty selector
+        const difficultySelect = document.getElementById('ai-difficulty');
+        if (difficultySelect) {
+            difficultySelect.addEventListener('change', () => {
+                this.ai.setDifficulty(difficultySelect.value);
+            });
+        }
+        // Player color selector
+        const colorSelect = document.getElementById('player-color');
+        if (colorSelect) {
+            colorSelect.addEventListener('change', () => {
+                this.playerColor = colorSelect.value;
+                this.game = new ChessGame();
+                this.selectedSquare = null;
+                this.validMoves = [];
+                this.render();
+                this.checkAIMove();
+            });
+        }
+        // Setup promotion modal listeners
+        const promotionPieces = this.promotionModal.querySelectorAll('.promotion-piece');
+        promotionPieces.forEach(pieceElement => {
+            pieceElement.addEventListener('click', () => {
+                const pieceType = pieceElement.getAttribute('data-piece');
+                this.handlePromotionChoice(pieceType);
+            });
+        });
     }
     render() {
         this.renderBoard();
         this.renderStatus();
         this.renderMoveHistory();
+        // Check for pending promotion
+        if (this.game.hasPendingPromotion()) {
+            this.showPromotionModal();
+        }
     }
     renderBoard() {
         this.boardElement.innerHTML = '';
@@ -69,7 +123,11 @@ export class ChessUI {
         }
     }
     handleSquareClick(row, col) {
-        if (this.game.isGameOver()) {
+        if (this.game.isGameOver() || this.isAIThinking) {
+            return;
+        }
+        // In AI mode, only allow moves for the player's color
+        if (this.isAIMode && this.game.getCurrentTurn() !== this.playerColor) {
             return;
         }
         const clickedPos = { row, col };
@@ -84,6 +142,7 @@ export class ChessUI {
                     this.selectedSquare = null;
                     this.validMoves = [];
                     this.render();
+                    this.checkAIMove();
                     return;
                 }
             }
@@ -109,7 +168,11 @@ export class ChessUI {
         }
     }
     renderStatus() {
-        const status = this.game.getGameStatus();
+        let status = this.game.getGameStatus();
+        // Show AI thinking status
+        if (this.isAIThinking) {
+            status = 'AI is thinking...';
+        }
         this.statusElement.textContent = status;
         // Update status styling
         this.statusElement.className = 'game-status';
@@ -179,6 +242,67 @@ export class ChessUI {
             notation += '+';
         }
         return notation;
+    }
+    showPromotionModal() {
+        const color = this.game.getPendingPromotionColor();
+        if (!color)
+            return;
+        // Update piece symbols in modal based on color
+        const pieceSymbols = {
+            queen: color === 'white' ? '♕' : '♛',
+            rook: color === 'white' ? '♖' : '♜',
+            bishop: color === 'white' ? '♗' : '♝',
+            knight: color === 'white' ? '♘' : '♞'
+        };
+        const promotionPieces = this.promotionModal.querySelectorAll('.promotion-piece');
+        promotionPieces.forEach(pieceElement => {
+            const pieceType = pieceElement.getAttribute('data-piece');
+            const symbolElement = pieceElement.querySelector('.piece-symbol');
+            if (symbolElement && pieceType) {
+                symbolElement.textContent = pieceSymbols[pieceType];
+            }
+        });
+        // Show modal
+        this.promotionModal.classList.add('show');
+    }
+    hidePromotionModal() {
+        this.promotionModal.classList.remove('show');
+    }
+    handlePromotionChoice(pieceType) {
+        this.game.completePromotion(pieceType);
+        this.hidePromotionModal();
+        this.render();
+        this.checkAIMove();
+    }
+    checkAIMove() {
+        if (!this.isAIMode || this.game.isGameOver() || this.game.hasPendingPromotion()) {
+            return;
+        }
+        const currentTurn = this.game.getCurrentTurn();
+        const aiColor = this.playerColor === 'white' ? 'black' : 'white';
+        if (currentTurn === aiColor) {
+            this.makeAIMove();
+        }
+    }
+    async makeAIMove() {
+        this.isAIThinking = true;
+        this.renderStatus();
+        // Add a small delay so the user can see the AI is thinking
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const bestMove = this.ai.findBestMove(this.game);
+        if (bestMove) {
+            this.game.makeMove(bestMove.from, bestMove.to);
+            // If AI has a pending promotion, auto-promote to queen
+            if (this.game.hasPendingPromotion()) {
+                this.game.completePromotion('queen');
+            }
+            this.isAIThinking = false;
+            this.render();
+        }
+        else {
+            this.isAIThinking = false;
+            this.render();
+        }
     }
 }
 //# sourceMappingURL=ui.js.map

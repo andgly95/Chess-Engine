@@ -3,6 +3,7 @@ import { createInitialBoard, copyBoard } from './board.js';
 import { getValidMoves, isKingInCheck, canCastle } from './piece.js';
 export class ChessGame {
     constructor() {
+        this.pendingPromotion = null;
         this.state = {
             board: createInitialBoard(),
             currentTurn: 'white',
@@ -109,11 +110,21 @@ export class ChessGame {
             this.state.board[from.row][to.col] = null;
         }
         // Handle pawn promotion
-        let promotionTo;
         if (piece.type === 'pawn' && (to.row === 0 || to.row === 7)) {
-            // Auto-promote to queen for now
-            piece.type = 'queen';
-            promotionTo = 'queen';
+            // Store pending promotion and wait for user choice
+            this.pendingPromotion = {
+                position: to,
+                move: {
+                    from,
+                    to,
+                    piece: 'pawn',
+                    color: piece.color,
+                    captured: capturedPiece?.type,
+                    isCastling,
+                    isEnPassant
+                }
+            };
+            return true; // Move is valid, but promotion is pending
         }
         // Record the move
         const move = {
@@ -123,8 +134,7 @@ export class ChessGame {
             color: piece.color,
             captured: capturedPiece?.type,
             isCastling,
-            isEnPassant,
-            promotionTo
+            isEnPassant
         };
         this.state.moveHistory.push(move);
         // Switch turns
@@ -186,6 +196,43 @@ export class ChessGame {
             return `${this.state.currentTurn} is in check!`;
         }
         return `${this.state.currentTurn}'s turn`;
+    }
+    hasPendingPromotion() {
+        return this.pendingPromotion !== null;
+    }
+    getPendingPromotionColor() {
+        return this.pendingPromotion?.move.color || null;
+    }
+    completePromotion(pieceType) {
+        if (!this.pendingPromotion) {
+            return;
+        }
+        const { position, move } = this.pendingPromotion;
+        const piece = this.state.board[position.row][position.col];
+        if (!piece || piece.type !== 'pawn') {
+            this.pendingPromotion = null;
+            return;
+        }
+        // Promote the pawn
+        piece.type = pieceType;
+        // Record the complete move
+        const completeMove = {
+            from: move.from,
+            to: move.to,
+            piece: pieceType,
+            color: move.color,
+            captured: move.captured,
+            isCastling: move.isCastling || false,
+            isEnPassant: move.isEnPassant || false,
+            promotionTo: pieceType
+        };
+        this.state.moveHistory.push(completeMove);
+        // Clear pending promotion
+        this.pendingPromotion = null;
+        // Switch turns
+        this.state.currentTurn = this.state.currentTurn === 'white' ? 'black' : 'white';
+        // Check game state
+        this.updateGameState();
     }
 }
 //# sourceMappingURL=game.js.map
