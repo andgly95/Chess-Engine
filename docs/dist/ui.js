@@ -2,6 +2,7 @@
 import { ChessGame } from './game.js';
 import { getPieceSymbol, positionToNotation } from './board.js';
 import { ChessAI } from './ai.js';
+import { ChessCoach } from './coach.js';
 export class ChessUI {
     constructor(game) {
         this.selectedSquare = null;
@@ -9,12 +10,15 @@ export class ChessUI {
         this.isAIMode = false;
         this.playerColor = 'white';
         this.isAIThinking = false;
+        this.isGuideVisible = true;
         this.game = game;
         this.boardElement = document.getElementById('chess-board');
         this.statusElement = document.getElementById('game-status');
         this.historyElement = document.getElementById('move-history');
         this.promotionModal = document.getElementById('promotion-modal');
+        this.guideContent = document.getElementById('guide-content');
         this.ai = new ChessAI('medium');
+        this.coach = new ChessCoach();
         this.setupEventListeners();
         this.render();
     }
@@ -72,11 +76,27 @@ export class ChessUI {
                 this.handlePromotionChoice(pieceType);
             });
         });
+        // Setup guide toggle button
+        const toggleGuideBtn = document.getElementById('toggle-guide');
+        if (toggleGuideBtn) {
+            toggleGuideBtn.addEventListener('click', () => {
+                this.isGuideVisible = !this.isGuideVisible;
+                if (this.isGuideVisible) {
+                    this.guideContent.classList.remove('hidden');
+                    toggleGuideBtn.textContent = 'Hide';
+                }
+                else {
+                    this.guideContent.classList.add('hidden');
+                    toggleGuideBtn.textContent = 'Show';
+                }
+            });
+        }
     }
     render() {
         this.renderBoard();
         this.renderStatus();
         this.renderMoveHistory();
+        this.renderGuide();
         // Check for pending promotion
         if (this.game.hasPendingPromotion()) {
             this.showPromotionModal();
@@ -302,6 +322,57 @@ export class ChessUI {
         else {
             this.isAIThinking = false;
             this.render();
+        }
+    }
+    renderGuide() {
+        const moveHistory = this.game.getMoveHistory();
+        const analysis = this.coach.analyzePosition(moveHistory);
+        // Update opening name
+        const openingNameEl = document.querySelector('#opening-name .value');
+        if (openingNameEl) {
+            openingNameEl.textContent = analysis.openingName;
+        }
+        // Update opening description
+        const openingDescEl = document.getElementById('opening-description');
+        if (openingDescEl) {
+            openingDescEl.textContent = analysis.openingDescription;
+        }
+        // Update player opening
+        const playerOpeningEl = document.getElementById('player-opening');
+        if (playerOpeningEl) {
+            playerOpeningEl.textContent = analysis.playerOpening;
+        }
+        // Update opponent defense
+        const opponentDefenseEl = document.getElementById('opponent-defense');
+        if (opponentDefenseEl) {
+            opponentDefenseEl.textContent = analysis.opponentDefense;
+        }
+        // Update suggested moves
+        const suggestedMovesEl = document.getElementById('suggested-moves');
+        if (suggestedMovesEl) {
+            suggestedMovesEl.innerHTML = '';
+            analysis.suggestedMoves.forEach((move, index) => {
+                const moveDiv = document.createElement('div');
+                moveDiv.className = 'move-suggestion';
+                if (index === 0 && analysis.isInBook) {
+                    moveDiv.classList.add('best');
+                }
+                moveDiv.textContent = move;
+                suggestedMovesEl.appendChild(moveDiv);
+            });
+        }
+        // Update strategy tips
+        const strategyTipsEl = document.getElementById('strategy-tips');
+        if (strategyTipsEl) {
+            const ul = strategyTipsEl.querySelector('ul');
+            if (ul) {
+                ul.innerHTML = '';
+                analysis.strategyTips.forEach(tip => {
+                    const li = document.createElement('li');
+                    li.textContent = tip;
+                    ul.appendChild(li);
+                });
+            }
         }
     }
 }

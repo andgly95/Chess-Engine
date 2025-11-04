@@ -358,6 +358,174 @@ header h1 {
   color: #495057;
 }
 
+/* Chess Coach Guide Panel */
+.guide-panel {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  min-width: 350px;
+  max-width: 400px;
+}
+
+.guide-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.guide-header h2 {
+  color: #333;
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+.toggle-btn {
+  padding: 6px 12px;
+  background: #e9ecef;
+  border: none;
+  border-radius: 5px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #495057;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle-btn:hover {
+  background: #dee2e6;
+  transform: scale(1.05);
+}
+
+.guide-content {
+  display: block;
+}
+
+.guide-content.hidden {
+  display: none;
+}
+
+.guide-section {
+  margin-bottom: 25px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.guide-section:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.guide-section h3 {
+  color: #495057;
+  font-size: 1.1rem;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.guide-info {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 5px;
+}
+
+.guide-info .label {
+  font-weight: 600;
+  color: #667eea;
+}
+
+.guide-info .value {
+  color: #333;
+  font-weight: 500;
+}
+
+.guide-description {
+  padding: 12px;
+  background: #e7f5ff;
+  border-left: 4px solid #339af0;
+  border-radius: 5px;
+  font-size: 0.95rem;
+  color: #333;
+  line-height: 1.5;
+}
+
+.guide-analysis {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.analysis-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 5px;
+}
+
+.analysis-label {
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.9rem;
+}
+
+.analysis-value {
+  color: #667eea;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.suggested-moves {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.move-suggestion {
+  padding: 10px 12px;
+  background: #fff3cd;
+  border-left: 4px solid #ffc107;
+  border-radius: 5px;
+  font-size: 0.95rem;
+  color: #856404;
+  font-weight: 500;
+}
+
+.move-suggestion.best {
+  background: #d4edda;
+  border-left-color: #28a745;
+  color: #155724;
+}
+
+.strategy-tips {
+  background: #f8f9fa;
+  padding: 12px;
+  border-radius: 5px;
+}
+
+.strategy-tips ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.strategy-tips li {
+  color: #495057;
+  font-size: 0.9rem;
+  line-height: 1.8;
+  margin-bottom: 5px;
+}
+
+.strategy-tips li:last-child {
+  margin-bottom: 0;
+}
+
 @media (max-width: 768px) {
   .chess-board {
     grid-template-columns: repeat(8, 50px);
@@ -376,5 +544,10 @@ header h1 {
 
   .info-panel {
     width: 100%;
+  }
+
+  .guide-panel {
+    width: 100%;
+    min-width: auto;
   }
 }

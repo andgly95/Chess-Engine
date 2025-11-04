@@ -5,12 +5,15 @@ export declare class ChessUI {
     private statusElement;
     private historyElement;
     private promotionModal;
+    private guideContent;
     private selectedSquare;
     private validMoves;
     private ai;
+    private coach;
     private isAIMode;
     private playerColor;
     private isAIThinking;
+    private isGuideVisible;
     constructor(game: ChessGame);
     private setupEventListeners;
     render(): void;
@@ -24,4 +27,5 @@ export declare class ChessUI {
     private handlePromotionChoice;
     private checkAIMove;
     private makeAIMove;
+    private renderGuide;
 }

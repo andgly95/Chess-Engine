@@ -58,6 +58,62 @@
             <div id="move-history" class="move-history"></div>
           </div>
         </div>
+
+        <!-- Chess Coach Guide Panel -->
+        <div class="guide-panel">
+          <div class="guide-header">
+            <h2>♟️ Chess Coach</h2>
+            <button id="toggle-guide" class="toggle-btn">Hide</button>
+          </div>
+
+          <div class="guide-content" id="guide-content">
+            <div class="guide-section">
+              <h3>Opening</h3>
+              <div id="opening-name" class="guide-info">
+                <span class="label">Name:</span>
+                <span class="value">Game Start</span>
+              </div>
+              <div id="opening-description" class="guide-description">
+                Welcome! Make your first move to begin.
+              </div>
+            </div>
+
+            <div class="guide-section">
+              <h3>Position Analysis</h3>
+              <div id="position-analysis" class="guide-analysis">
+                <div class="analysis-item">
+                  <span class="analysis-label">Your Opening:</span>
+                  <span id="player-opening" class="analysis-value">-</span>
+                </div>
+                <div class="analysis-item">
+                  <span class="analysis-label">Opponent's Defense:</span>
+                  <span id="opponent-defense" class="analysis-value">-</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="guide-section">
+              <h3>Suggested Moves</h3>
+              <div id="suggested-moves" class="suggested-moves">
+                <div class="move-suggestion">
+                  Best openings: e4, d4, Nf3, c4
+                </div>
+              </div>
+            </div>
+
+            <div class="guide-section">
+              <h3>Strategy Tips</h3>
+              <div id="strategy-tips" class="strategy-tips">
+                <ul>
+                  <li>Control the center (e4, d4, e5, d5)</li>
+                  <li>Develop your knights and bishops</li>
+                  <li>Castle early for king safety</li>
+                  <li>Don't move the same piece twice in opening</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   </div>
