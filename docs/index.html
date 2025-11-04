@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chess Game Simulator</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Chess Game Simulator</h1>
+    </header>
+
+    <main>
+      <div class="game-container">
+        <div class="board-container">
+          <div id="chess-board" class="chess-board"></div>
+        </div>
+
+        <div class="info-panel">
+          <div class="status-section">
+            <h2>Game Status</h2>
+            <div id="game-status" class="game-status"></div>
+            <button id="new-game-btn" class="btn">New Game</button>
+          </div>
+
+          <div class="history-section">
+            <h2>Move History</h2>
+            <div id="move-history" class="move-history"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="dist/main.js"></script>
+</body>
+</html>
