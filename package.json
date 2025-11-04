@@ -1,0 +1,17 @@
+{
+  "name": "chess-game-simulator",
+  "version": "1.0.0",
+  "description": "A chess game simulator built with TypeScript",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "serve": "python3 -m http.server 8000"
+  },
+  "keywords": ["chess", "game", "typescript"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
