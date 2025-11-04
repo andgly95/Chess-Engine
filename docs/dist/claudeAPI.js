@@ -9,8 +9,11 @@ export class ClaudeAPI {
             : '/.netlify/functions/claude-proxy'; // Production (Netlify)
         this.DEFAULT_MODEL = 'claude-sonnet-4-5-20250929';
         this.DEFAULT_MAX_TOKENS = 1024;
+        this.responseCache = new Map();
         // Try to load API key from localStorage
         this.loadConfig();
+        // Load cached responses from localStorage
+        this.loadCache();
     }
     /**
      * Set the API configuration
@@ -73,6 +76,44 @@ export class ClaudeAPI {
         }
     }
     /**
+     * Load response cache from localStorage
+     */
+    loadCache() {
+        try {
+            const saved = localStorage.getItem('chess_analysis_cache');
+            if (saved) {
+                const cacheArray = JSON.parse(saved);
+                this.responseCache = new Map(cacheArray);
+                console.log('Loaded', this.responseCache.size, 'cached responses');
+            }
+        }
+        catch (e) {
+            console.error('Failed to load cache:', e);
+            this.responseCache = new Map();
+        }
+    }
+    /**
+     * Save response cache to localStorage
+     */
+    saveCache() {
+        try {
+            const cacheArray = Array.from(this.responseCache.entries());
+            // Keep only last 50 entries to avoid localStorage limits
+            const trimmedCache = cacheArray.slice(-50);
+            localStorage.setItem('chess_analysis_cache', JSON.stringify(trimmedCache));
+        }
+        catch (e) {
+            console.error('Failed to save cache:', e);
+        }
+    }
+    /**
+     * Generate cache key from move history
+     */
+    getCacheKey(moveHistory) {
+        // Use PGN notation as cache key - identical move sequences get same analysis
+        return this.movesToPGN(moveHistory);
+    }
+    /**
      * Analyze the last move made
      */
     async analyzeMove(lastMove, moveHistory, boardState, currentTurn) {
@@ -81,13 +122,27 @@ export class ClaudeAPI {
                 moveExplanation: 'Please set your Claude API key in the AI Settings section below.',
                 tacticalAnalysis: '',
                 strategicPlan: '',
+                suggestedMoves: [],
+                strategyTips: [],
                 error: 'API key not configured'
             };
+        }
+        // Check cache first
+        const cacheKey = this.getCacheKey(moveHistory);
+        const cached = this.responseCache.get(cacheKey);
+        if (cached) {
+            console.log('Using cached analysis for:', cacheKey);
+            return cached;
         }
         try {
             const prompt = this.buildMoveAnalysisPrompt(lastMove, moveHistory, boardState, currentTurn);
             const response = await this.callClaudeAPI(prompt);
-            return this.parseMoveAnalysis(response);
+            const analysis = this.parseMoveAnalysis(response);
+            // Cache the response
+            this.responseCache.set(cacheKey, analysis);
+            this.saveCache();
+            console.log('Cached new analysis for:', cacheKey);
+            return analysis;
         }
         catch (error) {
             console.error('Claude API error:', error);
@@ -95,6 +150,8 @@ export class ClaudeAPI {
                 moveExplanation: 'Error analyzing move. Please check your API key and try again.',
                 tacticalAnalysis: '',
                 strategicPlan: '',
+                suggestedMoves: [],
+                strategyTips: [],
                 error: error instanceof Error ? error.message : 'Unknown error'
             };
         }
@@ -123,6 +180,10 @@ Analyze this move and provide:
 
 3. **Strategic Plan** (1-2 sentences): What should the opponent consider in response? What's the best continuation?
 
+4. **Suggested Moves** (2-4 moves): Provide specific chess moves in algebraic notation that the opponent should consider. Use proper notation (N for knight, B for bishop, R for rook, Q for queen, K for king).
+
+5. **Strategy Tips** (2-4 tips): Provide practical strategic principles or tips relevant to this position.
+
 Keep your response concise, educational, and friendly. Focus on helping a player understand chess principles.`;
     }
     /**
@@ -131,7 +192,7 @@ Keep your response concise, educational, and friendly. Focus on helping a player
     getAnalysisTool() {
         return {
             name: "provide_chess_analysis",
-            description: "Provide structured analysis of a chess move including explanation, tactical analysis, and strategic recommendations",
+            description: "Provide structured analysis of a chess move including explanation, tactical analysis, strategic recommendations, suggested moves, and strategy tips",
             input_schema: {
                 type: "object",
                 properties: {
@@ -146,9 +207,23 @@ Keep your response concise, educational, and friendly. Focus on helping a player
                     strategicPlan: {
                         type: "string",
                         description: "1-2 sentence recommendation for what the opponent should consider in response and best continuation"
+                    },
+                    suggestedMoves: {
+                        type: "array",
+                        items: {
+                            type: "string"
+                        },
+                        description: "Array of 2-4 suggested chess moves in algebraic notation (e.g., ['Nf3', 'd4', 'Bc4']) for the opponent to consider in response"
+                    },
+                    strategyTips: {
+                        type: "array",
+                        items: {
+                            type: "string"
+                        },
+                        description: "Array of 2-4 strategic tips or principles relevant to the current position (e.g., ['Control the center', 'Develop knights before bishops'])"
                     }
                 },
-                required: ["moveExplanation", "tacticalAnalysis", "strategicPlan"]
+                required: ["moveExplanation", "tacticalAnalysis", "strategicPlan", "suggestedMoves", "strategyTips"]
             }
         };
     }
@@ -211,7 +286,9 @@ Keep your response concise, educational, and friendly. Focus on helping a player
             return {
                 moveExplanation: response.moveExplanation,
                 tacticalAnalysis: response.tacticalAnalysis,
-                strategicPlan: response.strategicPlan
+                strategicPlan: response.strategicPlan,
+                suggestedMoves: response.suggestedMoves || [],
+                strategyTips: response.strategyTips || []
             };
         }
         // Fallback: Handle old text-based format for backward compatibility
@@ -223,14 +300,18 @@ Keep your response concise, educational, and friendly. Focus on helping a player
             return {
                 moveExplanation: explanationMatch?.[1]?.trim() || text.substring(0, 300),
                 tacticalAnalysis: tacticsMatch?.[1]?.trim() || '',
-                strategicPlan: strategyMatch?.[1]?.trim() || ''
+                strategicPlan: strategyMatch?.[1]?.trim() || '',
+                suggestedMoves: [],
+                strategyTips: []
             };
         }
         // Default fallback
         return {
             moveExplanation: 'Unable to parse response',
             tacticalAnalysis: '',
-            strategicPlan: ''
+            strategicPlan: '',
+            suggestedMoves: [],
+            strategyTips: []
         };
     }
     /**

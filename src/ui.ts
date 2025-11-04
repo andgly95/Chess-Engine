@@ -13,6 +13,8 @@ interface MoveAnalysisEntry {
   explanation: string;
   tacticalAnalysis?: string;
   strategicPlan?: string;
+  suggestedMoves?: string[];
+  strategyTips?: string[];
 }
 
 export class ChessUI {
@@ -230,16 +232,67 @@ export class ChessUI {
     if (moveExplanationEl) {
       let fullAnalysis = analysis.explanation;
       if (analysis.tacticalAnalysis) {
-        fullAnalysis += '\n\n🎯 ' + analysis.tacticalAnalysis;
+        fullAnalysis += '\n\nTactical Analysis: ' + analysis.tacticalAnalysis;
       }
       if (analysis.strategicPlan) {
-        fullAnalysis += '\n\n📋 ' + analysis.strategicPlan;
+        fullAnalysis += '\n\nStrategic Plan: ' + analysis.strategicPlan;
       }
       moveExplanationEl.textContent = fullAnalysis;
       moveExplanationEl.className = 'move-explanation ai-response';
     }
 
+    // Update suggested moves and strategy tips for this analysis
+    if (analysis.suggestedMoves) {
+      this.updateSuggestedMoves(analysis.suggestedMoves);
+    }
+    if (analysis.strategyTips) {
+      this.updateStrategyTips(analysis.strategyTips);
+    }
+
     this.updateAnalysisNavigation();
+  }
+
+  private updateClaudeSections(analysis: any): void {
+    // Update suggested moves section
+    if (analysis.suggestedMoves) {
+      this.updateSuggestedMoves(analysis.suggestedMoves);
+    }
+
+    // Update strategy tips section
+    if (analysis.strategyTips) {
+      this.updateStrategyTips(analysis.strategyTips);
+    }
+  }
+
+  private updateSuggestedMoves(moves: string[]): void {
+    const suggestedMovesEl = document.getElementById('suggested-moves');
+    if (suggestedMovesEl) {
+      suggestedMovesEl.innerHTML = '';
+      moves.forEach((move, index) => {
+        const moveDiv = document.createElement('div');
+        moveDiv.className = 'move-suggestion';
+        if (index === 0) {
+          moveDiv.classList.add('best');
+        }
+        moveDiv.textContent = move;
+        suggestedMovesEl.appendChild(moveDiv);
+      });
+    }
+  }
+
+  private updateStrategyTips(tips: string[]): void {
+    const strategyTipsEl = document.getElementById('strategy-tips');
+    if (strategyTipsEl) {
+      const ul = strategyTipsEl.querySelector('ul');
+      if (ul) {
+        ul.innerHTML = '';
+        tips.forEach(tip => {
+          const li = document.createElement('li');
+          li.textContent = tip;
+          ul.appendChild(li);
+        });
+      }
+    }
   }
 
   private updateAnalysisNavigation(): void {
@@ -569,60 +622,35 @@ export class ChessUI {
     const moveHistory = this.game.getMoveHistory();
     const analysis = this.coach.analyzePosition(moveHistory);
 
-    // Update opening name
+    // Update opening name and description (from coach.ts - static data)
     const openingNameEl = document.querySelector('#opening-name .value');
     if (openingNameEl) {
       openingNameEl.textContent = analysis.openingName;
     }
 
-    // Update opening description
     const openingDescEl = document.getElementById('opening-description');
     if (openingDescEl) {
       openingDescEl.textContent = analysis.openingDescription;
     }
 
-    // Update player opening
     const playerOpeningEl = document.getElementById('player-opening');
     if (playerOpeningEl) {
       playerOpeningEl.textContent = analysis.playerOpening;
     }
 
-    // Update opponent defense
     const opponentDefenseEl = document.getElementById('opponent-defense');
     if (opponentDefenseEl) {
       opponentDefenseEl.textContent = analysis.opponentDefense;
     }
 
-    // Update suggested moves
-    const suggestedMovesEl = document.getElementById('suggested-moves');
-    if (suggestedMovesEl) {
-      suggestedMovesEl.innerHTML = '';
-      analysis.suggestedMoves.forEach((move, index) => {
-        const moveDiv = document.createElement('div');
-        moveDiv.className = 'move-suggestion';
-        if (index === 0 && analysis.isInBook) {
-          moveDiv.classList.add('best');
-        }
-        moveDiv.textContent = move;
-        suggestedMovesEl.appendChild(moveDiv);
-      });
+    // Don't update suggested moves or strategy tips here - they come from Claude AI
+    // Only show initial fallback if no Claude data is available yet
+    if (moveHistory.length === 0) {
+      this.updateSuggestedMoves(analysis.suggestedMoves);
+      this.updateStrategyTips(analysis.strategyTips);
     }
 
-    // Update strategy tips
-    const strategyTipsEl = document.getElementById('strategy-tips');
-    if (strategyTipsEl) {
-      const ul = strategyTipsEl.querySelector('ul');
-      if (ul) {
-        ul.innerHTML = '';
-        analysis.strategyTips.forEach(tip => {
-          const li = document.createElement('li');
-          li.textContent = tip;
-          ul.appendChild(li);
-        });
-      }
-    }
-
-    // Analyze last move with Claude AI
+    // Analyze last move with Claude AI (will update suggested moves and tips)
     if (moveHistory.length > 0) {
       this.analyzeMoveWithClaude(moveHistory);
     }
@@ -689,14 +717,17 @@ export class ChessUI {
           moveNotation,
           explanation: analysis.moveExplanation,
           tacticalAnalysis: analysis.tacticalAnalysis,
-          strategicPlan: analysis.strategicPlan
+          strategicPlan: analysis.strategicPlan,
+          suggestedMoves: analysis.suggestedMoves,
+          strategyTips: analysis.strategyTips
         };
 
         this.moveAnalyses.push(entry);
         this.currentAnalysisIndex = this.moveAnalyses.length - 1;
 
-        // Display the latest analysis
+        // Display the latest analysis (will update all sections)
         this.displayCurrentAnalysis();
+        this.updateClaudeSections(analysis);
       } else {
         moveExplanationEl.textContent = analysis.moveExplanation;
         moveExplanationEl.className = 'move-explanation';

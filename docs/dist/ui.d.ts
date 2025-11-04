@@ -21,6 +21,9 @@ export declare class ChessUI {
     private updateApiKeyStatus;
     private navigateAnalysis;
     private displayCurrentAnalysis;
+    private updateClaudeSections;
+    private updateSuggestedMoves;
+    private updateStrategyTips;
     private updateAnalysisNavigation;
     render(): void;
     private renderBoard;

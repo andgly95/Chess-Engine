@@ -8,6 +8,8 @@ export interface ClaudeAnalysisResponse {
     moveExplanation: string;
     tacticalAnalysis: string;
     strategicPlan: string;
+    suggestedMoves: string[];
+    strategyTips: string[];
     error?: string;
 }
 export declare class ClaudeAPI {
@@ -15,6 +17,7 @@ export declare class ClaudeAPI {
     private readonly API_URL;
     private readonly DEFAULT_MODEL;
     private readonly DEFAULT_MAX_TOKENS;
+    private responseCache;
     constructor();
     /**
      * Set the API configuration
@@ -40,6 +43,18 @@ export declare class ClaudeAPI {
      * Load config from localStorage
      */
     private loadConfig;
+    /**
+     * Load response cache from localStorage
+     */
+    private loadCache;
+    /**
+     * Save response cache to localStorage
+     */
+    private saveCache;
+    /**
+     * Generate cache key from move history
+     */
+    private getCacheKey;
     /**
      * Analyze the last move made
      */
