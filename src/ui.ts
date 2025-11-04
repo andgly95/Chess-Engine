@@ -670,8 +670,11 @@ export class ChessUI {
 
     if (!containerEl || !progressionEl) return;
 
-    // Hide if no progression data
-    if (!progression || progression.length === 0) {
+    // Filter to only show moves with named openings
+    const namedOpenings = progression.filter(item => item.openingName && item.openingName.trim() !== '');
+
+    // Hide if no named openings
+    if (!namedOpenings || namedOpenings.length === 0) {
       containerEl.style.display = 'none';
       return;
     }
@@ -681,7 +684,7 @@ export class ChessUI {
 
     // Clear and populate progression
     progressionEl.innerHTML = '';
-    progression.forEach((item) => {
+    namedOpenings.forEach((item) => {
       const itemEl = document.createElement('div');
       itemEl.className = 'progression-item';
 
@@ -695,12 +698,7 @@ export class ChessUI {
 
       const openingEl = document.createElement('div');
       openingEl.className = 'progression-opening';
-      if (item.openingName) {
-        openingEl.textContent = item.openingName;
-      } else {
-        openingEl.textContent = 'Developing position...';
-        openingEl.classList.add('empty');
-      }
+      openingEl.textContent = item.openingName;
 
       itemEl.appendChild(numberEl);
       itemEl.appendChild(moveEl);
