@@ -28,11 +28,12 @@ export class ClaudeAPI {
   private readonly DEFAULT_MODEL = 'claude-sonnet-4-5-20250929';
   private readonly DEFAULT_MAX_TOKENS = 1024;
   private responseCache: Map<string, ClaudeAnalysisResponse> = new Map();
+  private readonly CACHE_VERSION = '2.0-stockfish'; // Increment to invalidate old cache
 
   constructor() {
     // Try to load API key from localStorage
     this.loadConfig();
-    // Load cached responses from localStorage
+    // Load cached responses from localStorage (with version check)
     this.loadCache();
   }
 
@@ -74,6 +75,15 @@ export class ClaudeAPI {
   }
 
   /**
+   * Clear the analysis cache
+   */
+  clearCache(): void {
+    this.responseCache.clear();
+    localStorage.removeItem('chess_analysis_cache');
+    console.log('Analysis cache cleared');
+  }
+
+  /**
    * Save config to localStorage
    */
   private saveConfig(): void {
@@ -105,11 +115,21 @@ export class ClaudeAPI {
    */
   private loadCache(): void {
     try {
+      // Check cache version first
+      const cacheVersion = localStorage.getItem('chess_analysis_cache_version');
+
+      if (cacheVersion !== this.CACHE_VERSION) {
+        console.log('Cache version mismatch. Clearing old cache.');
+        this.clearCache();
+        localStorage.setItem('chess_analysis_cache_version', this.CACHE_VERSION);
+        return;
+      }
+
       const saved = localStorage.getItem('chess_analysis_cache');
       if (saved) {
         const cacheArray = JSON.parse(saved);
         this.responseCache = new Map(cacheArray);
-        console.log('Loaded', this.responseCache.size, 'cached responses');
+        console.log('Loaded', this.responseCache.size, 'cached responses (v' + this.CACHE_VERSION + ')');
       }
     } catch (e) {
       console.error('Failed to load cache:', e);
