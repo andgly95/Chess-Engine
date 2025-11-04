@@ -49,7 +49,7 @@ export declare class ClaudeAPI {
      */
     private buildMoveAnalysisPrompt;
     /**
-     * Call Claude API
+     * Call Claude API through proxy
      */
     private callClaudeAPI;
     /**

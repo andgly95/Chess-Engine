@@ -17,7 +17,11 @@ export interface ClaudeAnalysisResponse {
 
 export class ClaudeAPI {
   private config: ClaudeConfig | null = null;
-  private readonly API_URL = 'https://api.anthropic.com/v1/messages';
+  // Use proxy endpoint to avoid CORS issues
+  // When deployed to Netlify/Vercel, this will route through serverless function
+  private readonly API_URL = window.location.hostname === 'localhost'
+    ? 'http://localhost:3001/api/claude'  // Local development
+    : '/.netlify/functions/claude-proxy'; // Production (Netlify)
   private readonly DEFAULT_MODEL = 'claude-3-5-sonnet-20241022';
   private readonly DEFAULT_MAX_TOKENS = 1024;
 
@@ -163,39 +167,52 @@ STRATEGY: [strategic recommendation]`;
   }
 
   /**
-   * Call Claude API
+   * Call Claude API through proxy
    */
   private async callClaudeAPI(prompt: string): Promise<string> {
     if (!this.config) {
       throw new Error('API not configured');
     }
 
-    const response = await fetch(this.API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': this.config.apiKey,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: this.config.model,
-        max_tokens: this.config.maxTokens,
-        messages: [
-          {
-            role: 'user',
-            content: prompt
-          }
-        ]
-      })
-    });
+    try {
+      const response = await fetch(this.API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          apiKey: this.config.apiKey,
+          prompt: prompt
+        })
+      });
 
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`API error: ${response.status} - ${error}`);
+      if (!response.ok) {
+        const error = await response.text();
+
+        // Provide helpful error message for CORS issues
+        if (error.includes('CORS') || response.status === 0) {
+          throw new Error(
+            'CORS Error: This app needs to be deployed to Netlify or Vercel to work. ' +
+            'GitHub Pages does not support serverless functions. ' +
+            'See DEPLOYMENT.md for instructions.'
+          );
+        }
+
+        throw new Error(`API error: ${response.status} - ${error}`);
+      }
+
+      const data = await response.json();
+      return data.content[0].text;
+    } catch (error) {
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        throw new Error(
+          'Network Error: Please deploy this app to Netlify or Vercel to enable Claude AI. ' +
+          'Direct browser calls to Claude API are blocked by CORS. ' +
+          'See DEPLOYMENT.md for setup instructions.'
+        );
+      }
+      throw error;
     }
-
-    const data = await response.json();
-    return data.content[0].text;
   }
 
   /**
