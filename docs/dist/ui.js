@@ -11,6 +11,8 @@ export class ChessUI {
         this.playerColor = 'white';
         this.isAIThinking = false;
         this.isGuideVisible = true;
+        this.moveAnalyses = [];
+        this.currentAnalysisIndex = -1;
         this.game = game;
         this.boardElement = document.getElementById('chess-board');
         this.statusElement = document.getElementById('game-status');
@@ -29,6 +31,8 @@ export class ChessUI {
                 this.game = new ChessGame();
                 this.selectedSquare = null;
                 this.validMoves = [];
+                this.moveAnalyses = [];
+                this.currentAnalysisIndex = -1;
                 this.render();
                 this.checkAIMove();
             });
@@ -45,6 +49,8 @@ export class ChessUI {
                 this.game = new ChessGame();
                 this.selectedSquare = null;
                 this.validMoves = [];
+                this.moveAnalyses = [];
+                this.currentAnalysisIndex = -1;
                 this.render();
                 this.checkAIMove();
             });
@@ -64,6 +70,8 @@ export class ChessUI {
                 this.game = new ChessGame();
                 this.selectedSquare = null;
                 this.validMoves = [];
+                this.moveAnalyses = [];
+                this.currentAnalysisIndex = -1;
                 this.render();
                 this.checkAIMove();
             });
@@ -132,6 +140,19 @@ export class ChessUI {
         else {
             console.error('Could not find API key elements:', { saveApiKeyBtn, apiKeyInput, apiStatus });
         }
+        // Setup analysis navigation buttons
+        const prevAnalysisBtn = document.getElementById('prev-analysis');
+        const nextAnalysisBtn = document.getElementById('next-analysis');
+        if (prevAnalysisBtn) {
+            prevAnalysisBtn.addEventListener('click', () => {
+                this.navigateAnalysis(-1);
+            });
+        }
+        if (nextAnalysisBtn) {
+            nextAnalysisBtn.addEventListener('click', () => {
+                this.navigateAnalysis(1);
+            });
+        }
     }
     updateApiKeyStatus() {
         const apiStatus = document.getElementById('api-status');
@@ -144,12 +165,68 @@ export class ChessUI {
             }
         }
     }
+    navigateAnalysis(direction) {
+        if (this.moveAnalyses.length === 0)
+            return;
+        this.currentAnalysisIndex += direction;
+        // Clamp to valid range
+        if (this.currentAnalysisIndex < 0) {
+            this.currentAnalysisIndex = 0;
+        }
+        else if (this.currentAnalysisIndex >= this.moveAnalyses.length) {
+            this.currentAnalysisIndex = this.moveAnalyses.length - 1;
+        }
+        this.displayCurrentAnalysis();
+    }
+    displayCurrentAnalysis() {
+        if (this.currentAnalysisIndex < 0 || this.currentAnalysisIndex >= this.moveAnalyses.length) {
+            return;
+        }
+        const analysis = this.moveAnalyses[this.currentAnalysisIndex];
+        const moveExplanationEl = document.getElementById('move-explanation');
+        if (moveExplanationEl) {
+            let fullAnalysis = analysis.explanation;
+            if (analysis.tacticalAnalysis) {
+                fullAnalysis += '\n\n🎯 ' + analysis.tacticalAnalysis;
+            }
+            if (analysis.strategicPlan) {
+                fullAnalysis += '\n\n📋 ' + analysis.strategicPlan;
+            }
+            moveExplanationEl.textContent = fullAnalysis;
+            moveExplanationEl.className = 'move-explanation ai-response';
+        }
+        this.updateAnalysisNavigation();
+    }
+    updateAnalysisNavigation() {
+        const prevBtn = document.getElementById('prev-analysis');
+        const nextBtn = document.getElementById('next-analysis');
+        const counter = document.getElementById('analysis-counter');
+        if (this.moveAnalyses.length === 0) {
+            if (prevBtn)
+                prevBtn.disabled = true;
+            if (nextBtn)
+                nextBtn.disabled = true;
+            if (counter)
+                counter.textContent = '-';
+            return;
+        }
+        if (prevBtn) {
+            prevBtn.disabled = this.currentAnalysisIndex <= 0;
+        }
+        if (nextBtn) {
+            nextBtn.disabled = this.currentAnalysisIndex >= this.moveAnalyses.length - 1;
+        }
+        if (counter) {
+            counter.textContent = `${this.currentAnalysisIndex + 1} / ${this.moveAnalyses.length}`;
+        }
+    }
     render() {
         this.renderBoard();
         this.renderStatus();
         this.renderMoveHistory();
         this.renderGuide();
         this.updateApiKeyStatus();
+        this.updateAnalysisNavigation();
         // Check for pending promotion
         if (this.game.hasPendingPromotion()) {
             this.showPromotionModal();
@@ -291,7 +368,14 @@ export class ChessUI {
         else {
             // Piece symbol (except for pawns)
             if (move.piece !== 'pawn') {
-                notation += move.piece[0].toUpperCase();
+                const pieceNotation = {
+                    'knight': 'N',
+                    'bishop': 'B',
+                    'rook': 'R',
+                    'queen': 'Q',
+                    'king': 'K'
+                };
+                notation += pieceNotation[move.piece];
             }
             // Capture notation
             if (move.captured || move.isEnPassant) {
@@ -304,7 +388,13 @@ export class ChessUI {
             notation += positionToNotation(move.to.row, move.to.col);
             // Promotion
             if (move.promotionTo) {
-                notation += '=' + move.promotionTo[0].toUpperCase();
+                const promotionNotation = {
+                    'knight': 'N',
+                    'bishop': 'B',
+                    'rook': 'R',
+                    'queen': 'Q'
+                };
+                notation += '=' + promotionNotation[move.promotionTo];
             }
         }
         // Check/Checkmate
@@ -445,6 +535,22 @@ export class ChessUI {
         }
         const lastMove = moveHistory[moveHistory.length - 1];
         const state = this.game.getState();
+        const moveNumber = moveHistory.length;
+        // Smart analysis logic: Skip analysis after user moves in AI mode
+        // Only analyze opponent/AI moves to avoid rapid succession
+        if (this.isAIMode) {
+            const aiColor = this.playerColor === 'white' ? 'black' : 'white';
+            const lastMoveColor = lastMove.color;
+            // Skip analysis if the last move was by the player (not the AI)
+            if (lastMoveColor !== aiColor) {
+                return;
+            }
+        }
+        // Check if we already analyzed this move
+        const alreadyAnalyzed = this.moveAnalyses.some(entry => entry.moveNumber === moveNumber);
+        if (alreadyAnalyzed) {
+            return;
+        }
         // Show loading
         loadingEl.style.display = 'block';
         moveExplanationEl.textContent = '';
@@ -452,20 +558,24 @@ export class ChessUI {
             const analysis = await this.coach.analyzeLastMove(lastMove, moveHistory, state.board, state.currentTurn);
             // Hide loading
             loadingEl.style.display = 'none';
-            if (analysis.error) {
-                moveExplanationEl.textContent = analysis.moveExplanation;
-                moveExplanationEl.className = 'move-explanation';
+            if (!analysis.error) {
+                // Store the analysis
+                const moveNotation = this.moveToNotation(lastMove);
+                const entry = {
+                    moveNumber,
+                    moveNotation,
+                    explanation: analysis.moveExplanation,
+                    tacticalAnalysis: analysis.tacticalAnalysis,
+                    strategicPlan: analysis.strategicPlan
+                };
+                this.moveAnalyses.push(entry);
+                this.currentAnalysisIndex = this.moveAnalyses.length - 1;
+                // Display the latest analysis
+                this.displayCurrentAnalysis();
             }
             else {
-                let fullAnalysis = analysis.moveExplanation;
-                if (analysis.tacticalAnalysis) {
-                    fullAnalysis += '\n\n🎯 ' + analysis.tacticalAnalysis;
-                }
-                if (analysis.strategicPlan) {
-                    fullAnalysis += '\n\n📋 ' + analysis.strategicPlan;
-                }
-                moveExplanationEl.textContent = fullAnalysis;
-                moveExplanationEl.className = 'move-explanation ai-response';
+                moveExplanationEl.textContent = analysis.moveExplanation;
+                moveExplanationEl.className = 'move-explanation';
             }
         }
         catch (error) {

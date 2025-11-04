@@ -14,9 +14,14 @@ export declare class ChessUI {
     private playerColor;
     private isAIThinking;
     private isGuideVisible;
+    private moveAnalyses;
+    private currentAnalysisIndex;
     constructor(game: ChessGame);
     private setupEventListeners;
     private updateApiKeyStatus;
+    private navigateAnalysis;
+    private displayCurrentAnalysis;
+    private updateAnalysisNavigation;
     render(): void;
     private renderBoard;
     private handleSquareClick;
