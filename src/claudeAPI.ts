@@ -23,10 +23,10 @@ export interface ClaudeAnalysisResponse {
 export class ClaudeAPI {
   private config: ClaudeConfig | null = null;
   // Use proxy endpoint to avoid CORS issues
-  // When deployed to Netlify/Vercel, this will route through serverless function
+  // When deployed to Vercel, this will route through serverless function
   private readonly API_URL = window.location.hostname === 'localhost'
     ? 'http://localhost:3001/api/claude'  // Local development
-    : '/.netlify/functions/claude-proxy'; // Production (Netlify)
+    : '/api/claude-proxy'; // Production (Vercel)
   private readonly DEFAULT_MODEL = 'claude-sonnet-4-5-20250929';
   private readonly DEFAULT_MAX_TOKENS = 1024;
   private responseCache: Map<string, ClaudeAnalysisResponse> = new Map();

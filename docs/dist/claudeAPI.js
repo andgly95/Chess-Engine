@@ -3,10 +3,10 @@ export class ClaudeAPI {
     constructor() {
         this.config = null;
         // Use proxy endpoint to avoid CORS issues
-        // When deployed to Netlify/Vercel, this will route through serverless function
+        // When deployed to Vercel, this will route through serverless function
         this.API_URL = window.location.hostname === 'localhost'
             ? 'http://localhost:3001/api/claude' // Local development
-            : '/.netlify/functions/claude-proxy'; // Production (Netlify)
+            : '/api/claude-proxy'; // Production (Vercel)
         this.DEFAULT_MODEL = 'claude-sonnet-4-5-20250929';
         this.DEFAULT_MAX_TOKENS = 1024;
         this.responseCache = new Map();
