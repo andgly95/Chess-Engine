@@ -207,7 +207,8 @@ export class StockfishEngine {
       }
 
       // Parse principal variation (best move sequence)
-      const pvMatch = line.match(/pv (.+)$/);
+      // Use space before 'pv' to avoid matching 'multipv'
+      const pvMatch = line.match(/ pv (.+)$/);
       if (!pvMatch) continue;
 
       const pvMoves = pvMatch[1].split(' ').filter(m => m.length > 0);
