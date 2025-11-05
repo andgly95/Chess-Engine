@@ -140,20 +140,50 @@ export class ChessUI {
             this.updateApiKeyStatus();
         }
         else {
-            console.error('Could not find API key elements:', { saveApiKeyBtn, apiKeyInput, apiStatus });
+            console.warn('Could not find API key elements');
         }
-        // Setup analysis navigation buttons
-        const prevAnalysisBtn = document.getElementById('prev-analysis');
-        const nextAnalysisBtn = document.getElementById('next-analysis');
-        if (prevAnalysisBtn) {
-            prevAnalysisBtn.addEventListener('click', () => {
-                this.navigateAnalysis(-1);
+        // Setup theme switcher
+        const themeSelect = document.getElementById('theme-select');
+        if (themeSelect) {
+            // Load saved theme
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            themeSelect.value = savedTheme;
+            this.applyTheme(savedTheme);
+            themeSelect.addEventListener('change', () => {
+                const theme = themeSelect.value;
+                this.applyTheme(theme);
+                localStorage.setItem('theme', theme);
             });
         }
-        if (nextAnalysisBtn) {
-            nextAnalysisBtn.addEventListener('click', () => {
-                this.navigateAnalysis(1);
+        // Setup cache controls
+        const clearCacheBtn = document.getElementById('clear-cache-btn');
+        if (clearCacheBtn) {
+            clearCacheBtn.addEventListener('click', () => {
+                this.coach.getClaudeAPI().clearCache();
+                this.updateCacheCount();
+                // Visual feedback
+                clearCacheBtn.textContent = 'Cleared!';
+                setTimeout(() => {
+                    clearCacheBtn.textContent = 'Clear Cache';
+                }, 2000);
             });
+        }
+        // Update cache count initially and on any analysis
+        this.updateCacheCount();
+    }
+    applyTheme(theme) {
+        if (theme === 'light') {
+            document.body.classList.add('light-theme');
+        }
+        else {
+            document.body.classList.remove('light-theme');
+        }
+    }
+    updateCacheCount() {
+        const cacheCountEl = document.getElementById('cache-count');
+        if (cacheCountEl) {
+            const count = this.coach.getClaudeAPI().getCacheSize();
+            cacheCountEl.textContent = `${count} cached ${count === 1 ? 'entry' : 'entries'}`;
         }
     }
     updateApiKeyStatus() {
@@ -651,6 +681,8 @@ export class ChessUI {
                 console.log('🎯 UI: Displaying analysis and updating sections');
                 this.displayCurrentAnalysis();
                 this.updateClaudeSections(analysis);
+                // Update cache count after analysis
+                this.updateCacheCount();
             }
             else {
                 console.error('❌ UI: Analysis returned with error:', analysis.error);

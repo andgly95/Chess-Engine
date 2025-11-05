@@ -59,6 +59,12 @@ export class ClaudeAPI {
         console.log('Analysis cache cleared');
     }
     /**
+     * Get the number of cached entries
+     */
+    getCacheSize() {
+        return this.responseCache.size;
+    }
+    /**
      * Save config to localStorage
      */
     saveConfig() {

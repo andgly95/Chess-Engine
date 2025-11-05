@@ -44,6 +44,10 @@ export declare class ClaudeAPI {
      */
     clearCache(): void;
     /**
+     * Get the number of cached entries
+     */
+    getCacheSize(): number;
+    /**
      * Save config to localStorage
      */
     private saveConfig;

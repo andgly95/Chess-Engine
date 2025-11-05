@@ -86,6 +86,13 @@ export class ClaudeAPI {
   }
 
   /**
+   * Get the number of cached entries
+   */
+  getCacheSize(): number {
+    return this.responseCache.size;
+  }
+
+  /**
    * Save config to localStorage
    */
   private saveConfig(): void {

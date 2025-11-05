@@ -1,3 +1,37 @@
+/* CSS Variables for theming */
+:root {
+  --bg-primary: #121212;
+  --bg-secondary: #1a1a1a;
+  --bg-tertiary: #0d0d0d;
+  --text-primary: #f8f9fa;
+  --text-secondary: #c5cdd5;
+  --text-muted: #8b949e;
+  --border-color: #333333;
+  --border-light: #424242;
+  --accent-primary: #667eea;
+  --accent-hover: #5568d3;
+  --success-color: #10b981;
+  --danger-color: #ef4444;
+  --warning-color: #f59e0b;
+}
+
+/* Light theme */
+body.light-theme {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f5f5;
+  --bg-tertiary: #e8e8e8;
+  --text-primary: #1a1a1a;
+  --text-secondary: #4a4a4a;
+  --text-muted: #6b6b6b;
+  --border-color: #d0d0d0;
+  --border-light: #e0e0e0;
+  --accent-primary: #667eea;
+  --accent-hover: #5568d3;
+  --success-color: #10b981;
+  --danger-color: #ef4444;
+  --warning-color: #f59e0b;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -6,13 +40,15 @@
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #121212;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 20px;
   font-size: 16px;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .container {
@@ -22,7 +58,7 @@ body {
 
 header {
   text-align: center;
-  color: #f8f9fa;
+  color: var(--text-primary);
   margin-bottom: 30px;
 }
 
@@ -436,10 +472,10 @@ header h1 {
 
 /* Chess Coach Guide Panel */
 .guide-panel {
-  background: #1e1e1e;
+  background: var(--bg-secondary);
   padding: 24px;
   border-radius: 4px;
-  border: 1px solid #333333;
+  border: 1px solid var(--border-color);
   min-width: 350px;
   max-width: 400px;
 }
@@ -579,7 +615,7 @@ header h1 {
   font-size: 0.95rem;
 }
 
-/* Opening Progression - INTJ Design */
+/* Opening Progression */
 .opening-progression-container {
   margin-top: 15px;
   padding-top: 15px;
@@ -705,7 +741,7 @@ header h1 {
   50% { opacity: 0.5; }
 }
 
-/* Analysis Cards - INTJ Design */
+/* Analysis Cards */
 .analysis-card {
   background: #1e1e1e;
   border-radius: 4px;
@@ -783,8 +819,8 @@ header h1 {
 /* AI Settings */
 .ai-settings {
   padding: 14px;
-  background: #121212;
-  border: 1px solid #333333;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
 }
 
@@ -798,7 +834,7 @@ header h1 {
 .setting-item label {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #c5cdd5;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 1px;
   font-family: 'Courier New', monospace;
@@ -806,24 +842,59 @@ header h1 {
 
 .api-key-input {
   padding: 10px 12px;
-  border: 1px solid #333333;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   font-size: 0.95rem;
   font-family: 'Courier New', monospace;
-  background: #1e1e1e;
-  color: #f8f9fa;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
   transition: all 0.2s ease;
 }
 
 .api-key-input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: var(--accent-primary);
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+/* Theme Select */
+.theme-select {
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 0.95rem;
+  font-family: 'Courier New', monospace;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.theme-select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+/* Cache Controls */
+.cache-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cache-count {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-family: 'Courier New', monospace;
+  flex: 1;
+  min-width: 120px;
 }
 
 .btn-small {
   padding: 10px 18px;
-  background: #667eea;
+  background: var(--accent-primary);
   color: white;
   border: none;
   border-radius: 4px;
@@ -834,31 +905,41 @@ header h1 {
   text-transform: uppercase;
   letter-spacing: 1px;
   font-family: 'Courier New', monospace;
+  white-space: nowrap;
 }
 
 .btn-small:hover {
-  background: #764ba2;
+  background: var(--accent-hover);
 }
 
 .btn-small:active {
-  background: #5568d3;
+  background: var(--accent-hover);
+  transform: scale(0.98);
+}
+
+.btn-small.btn-danger {
+  background: var(--danger-color);
+}
+
+.btn-small.btn-danger:hover {
+  background: #dc2626;
 }
 
 .setting-status {
   padding: 10px 12px;
-  background: #1e1e1e;
-  border: 1px solid #333333;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   margin-bottom: 8px;
 }
 
 .status-text {
   font-size: 0.9rem;
-  color: #c5cdd5;
+  color: var(--text-secondary);
 }
 
 .status-text.success {
-  color: #28a745;
+  color: var(--success-color);
   font-weight: 600;
 }
 
