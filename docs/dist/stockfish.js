@@ -17,20 +17,32 @@ export class StockfishEngine {
             // Create Web Worker pointing to stockfish WASM file
             // Use the lite single-threaded version for better browser compatibility
             const stockfishPath = './stockfish/stockfish-17.1-lite-single-03e3232.js';
+            console.log('Initializing Stockfish from:', stockfishPath);
             this.engine = new Worker(stockfishPath);
+            this.engine.onerror = (error) => {
+                console.error('Stockfish Worker error:', error);
+                this.initialized = false;
+            };
             this.engine.onmessage = (event) => {
+                console.log('Stockfish message:', event.data);
                 this.handleEngineMessage(event.data);
             };
-            // Send initial UCI commands
+            // Send initial UCI commands with timeout
+            const initTimeout = setTimeout(() => {
+                console.error('Stockfish initialization timeout');
+                this.initialized = false;
+            }, 10000);
             await this.sendCommand('uci');
             await this.waitForReady();
             await this.sendCommand('setoption name MultiPV value 5'); // Get top 5 moves
+            clearTimeout(initTimeout);
             this.initialized = true;
-            console.log('Stockfish engine initialized successfully');
+            console.log('✅ Stockfish engine initialized successfully');
         }
         catch (error) {
-            console.error('Failed to initialize Stockfish:', error);
-            console.log('Stockfish integration will be disabled. The app will still work without it.');
+            console.error('❌ Failed to initialize Stockfish:', error);
+            console.log('App will continue without Stockfish analysis.');
+            this.initialized = false;
             // Don't throw - allow app to work without Stockfish
         }
     }

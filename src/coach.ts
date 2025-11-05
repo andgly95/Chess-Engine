@@ -533,12 +533,16 @@ export class ChessCoach {
     boardState: Board,
     currentTurn: Color
   ): Promise<ClaudeAnalysisResponse> {
+    console.log('🔍 Starting analysis for move:', moveHistory.length);
+
     // ALWAYS get Stockfish analysis first (primary engine)
     const stockfishAnalysis = await this.getStockfishAnalysis(boardState, currentTurn, moveHistory);
+    console.log('Stockfish analysis result:', stockfishAnalysis ? 'Success' : 'Failed');
 
     // If we have Stockfish moves, convert them to readable format
     let stockfishMoves: string[] = [];
     if (stockfishAnalysis && stockfishAnalysis.bestMoves.length > 0) {
+      console.log('Converting', stockfishAnalysis.bestMoves.length, 'Stockfish moves to readable format');
       stockfishMoves = stockfishAnalysis.bestMoves.map(move => {
         const readable = this.stockfish.uciToAlgebraic(move.move, boardState);
         const evalStr = move.mate !== undefined
@@ -546,6 +550,9 @@ export class ChessCoach {
           : `${(move.score / 100).toFixed(1)}`;
         return `${readable} (${evalStr})`;
       });
+      console.log('Stockfish suggests:', stockfishMoves);
+    } else {
+      console.warn('⚠️ No Stockfish moves available');
     }
 
     // Get opening information if we're still in book
