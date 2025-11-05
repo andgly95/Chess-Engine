@@ -36,17 +36,63 @@ header h1 {
 
 .game-container {
   display: flex;
-  gap: 30px;
+  gap: 0;
   justify-content: center;
   align-items: flex-start;
   flex-wrap: wrap;
 }
 
+/* Evaluation Bar - Chess.com/Lichess style */
+.eval-bar-container {
+  width: 30px;
+  display: flex;
+  align-items: center;
+}
+
+.eval-bar {
+  width: 30px;
+  height: 580px;
+  background: #000;
+  position: relative;
+  border: 2px solid #333333;
+  border-radius: 4px 0 0 4px;
+  overflow: hidden;
+}
+
+.eval-bar-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: #fff;
+  transition: height 0.3s ease;
+  height: 50%; /* Start at equal (0.0 evaluation) */
+}
+
+.eval-score {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+  color: #667eea;
+  background: rgba(18, 18, 18, 0.9);
+  padding: 4px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+  z-index: 10;
+  pointer-events: none;
+}
+
 .board-container {
   background: #1e1e1e;
   padding: 24px;
-  border-radius: 4px;
+  border-radius: 0 4px 4px 0;
   border: 1px solid #333333;
+  border-left: none;
+  margin-right: 30px;
 }
 
 .chess-board {

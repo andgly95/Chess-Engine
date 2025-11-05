@@ -24,6 +24,8 @@ export class ChessUI {
   private historyElement: HTMLElement;
   private promotionModal: HTMLElement;
   private guideContent: HTMLElement;
+  private evalBarFill: HTMLElement;
+  private evalScore: HTMLElement;
   private selectedSquare: Position | null = null;
   private validMoves: Position[] = [];
   private ai: ChessAI;
@@ -42,6 +44,8 @@ export class ChessUI {
     this.historyElement = document.getElementById('move-history')!;
     this.promotionModal = document.getElementById('promotion-modal')!;
     this.guideContent = document.getElementById('guide-content')!;
+    this.evalBarFill = document.getElementById('eval-bar-fill')!;
+    this.evalScore = document.getElementById('eval-score')!;
     this.ai = new ChessAI('medium');
     this.coach = new ChessCoach();
 
@@ -766,6 +770,11 @@ export class ChessUI {
       loadingEl.style.display = 'none';
 
       if (!analysis.error) {
+        // Update evaluation bar with Stockfish evaluation
+        if (analysis.evaluation !== undefined) {
+          this.updateEvaluationBar(analysis.evaluation, analysis.mate);
+        }
+
         // Store the analysis
         const moveNotation = this.moveToNotation(lastMove);
         const entry: MoveAnalysisEntry = {
@@ -795,5 +804,34 @@ export class ChessUI {
       tacticalAnalysisEl.textContent = 'Analysis error';
       strategicPlanEl.textContent = 'Analysis error';
     }
+  }
+
+  /**
+   * Update evaluation bar based on Stockfish evaluation
+   * @param evaluation - Centipawn evaluation (positive = white advantage)
+   * @param mate - Mate in X moves (optional)
+   */
+  private updateEvaluationBar(evaluation: number, mate?: number): void {
+    let displayText: string;
+    let heightPercentage: number;
+
+    if (mate !== undefined) {
+      // Mate detected
+      displayText = `M${mate > 0 ? '+' : ''}${mate}`;
+      heightPercentage = mate > 0 ? 95 : 5; // Max advantage
+    } else {
+      // Convert centipawns to pawns
+      const pawns = evaluation / 100;
+      displayText = pawns > 0 ? `+${pawns.toFixed(1)}` : pawns.toFixed(1);
+
+      // Calculate bar height (50% = equal, clamped between 5% and 95%)
+      // Each pawn is worth about 10% of the bar
+      heightPercentage = 50 + (pawns * 10);
+      heightPercentage = Math.max(5, Math.min(95, heightPercentage));
+    }
+
+    // Update the bar
+    this.evalBarFill.style.height = `${heightPercentage}%`;
+    this.evalScore.textContent = displayText;
   }
 }
