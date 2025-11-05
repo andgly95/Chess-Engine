@@ -328,6 +328,8 @@ export class ChessUI {
                 if (piece) {
                     square.textContent = getPieceSymbol(piece);
                     square.classList.add('has-piece');
+                    // Add data attribute for piece color styling
+                    square.setAttribute('data-piece-color', piece.color);
                 }
                 // Highlight selected square
                 if (this.selectedSquare &&

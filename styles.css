@@ -113,8 +113,8 @@ header h1 {
   font-size: 0.75rem;
   font-weight: 700;
   font-family: 'Courier New', monospace;
-  color: #667eea;
-  background: rgba(18, 18, 18, 0.9);
+  color: var(--accent-primary);
+  background: rgba(0, 0, 0, 0.8);
   padding: 4px 6px;
   border-radius: 3px;
   white-space: nowrap;
@@ -148,6 +148,17 @@ header h1 {
   cursor: pointer;
   transition: all 0.2s ease;
   user-select: none;
+}
+
+/* Chess piece colors - fixed regardless of theme */
+.square[data-piece-color="white"] {
+  color: #f0f0f0;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.square[data-piece-color="black"] {
+  color: #2d2d2d;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.3);
 }
 
 .square.light {
@@ -486,11 +497,11 @@ header h1 {
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 15px;
-  border-bottom: 1px solid #333333;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .guide-header h2 {
-  color: #f8f9fa;
+  color: var(--text-primary);
   font-size: 1.5rem;
   margin: 0;
   font-family: 'Courier New', monospace;
@@ -501,12 +512,12 @@ header h1 {
 
 .toggle-btn {
   padding: 8px 14px;
-  background: #121212;
-  border: 1px solid #333333;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #c5cdd5;
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s ease;
   text-transform: uppercase;
@@ -515,9 +526,9 @@ header h1 {
 }
 
 .toggle-btn:hover {
-  background: #1e1e1e;
-  border-color: #667eea;
-  color: #667eea;
+  background: var(--bg-secondary);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
 }
 
 .guide-content {
@@ -531,7 +542,7 @@ header h1 {
 .guide-section {
   margin-bottom: 28px;
   padding-bottom: 22px;
-  border-bottom: 1px solid #333333;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .guide-section:last-child {
@@ -541,7 +552,7 @@ header h1 {
 }
 
 .guide-section h3 {
-  color: #c5cdd5;
+  color: var(--text-secondary);
   font-size: 1.15rem;
   margin-bottom: 14px;
   font-weight: 600;
@@ -555,14 +566,14 @@ header h1 {
   gap: 12px;
   margin-bottom: 10px;
   padding: 12px;
-  background: #121212;
-  border: 1px solid #333333;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
 }
 
 .guide-info .label {
   font-weight: 600;
-  color: #667eea;
+  color: var(--accent-primary);
   text-transform: uppercase;
   letter-spacing: 1px;
   font-family: 'Courier New', monospace;
@@ -570,18 +581,18 @@ header h1 {
 }
 
 .guide-info .value {
-  color: #f8f9fa;
+  color: var(--text-primary);
   font-weight: 500;
   font-size: 1rem;
 }
 
 .guide-description {
   padding: 14px;
-  background: #121212;
-  border-left: 3px solid #667eea;
+  background: var(--bg-tertiary);
+  border-left: 3px solid var(--accent-primary);
   border-radius: 4px;
   font-size: 1rem;
-  color: #f8f9fa;
+  color: var(--text-primary);
   line-height: 1.6;
 }
 
@@ -595,14 +606,14 @@ header h1 {
   display: flex;
   justify-content: space-between;
   padding: 12px;
-  background: #121212;
-  border: 1px solid #333333;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
 }
 
 .analysis-label {
   font-weight: 600;
-  color: #c5cdd5;
+  color: var(--text-secondary);
   font-size: 0.95rem;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -610,7 +621,7 @@ header h1 {
 }
 
 .analysis-value {
-  color: #667eea;
+  color: var(--accent-primary);
   font-weight: 600;
   font-size: 0.95rem;
 }
