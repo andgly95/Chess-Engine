@@ -1,5 +1,6 @@
 import { Move, Color, Board } from './types.js';
 import { ClaudeAPI, ClaudeAnalysisResponse } from './claudeAPI.js';
+import { StockfishEngine, StockfishAnalysis } from './stockfish.js';
 export interface OpeningInfo {
     name: string;
     moves: string[];
@@ -25,12 +26,17 @@ export interface CoachAnalysis {
 }
 export declare class ChessCoach {
     private claudeAPI;
+    private stockfish;
     private openingsDatabase;
     constructor();
     /**
      * Get Claude API instance for configuration
      */
     getClaudeAPI(): ClaudeAPI;
+    /**
+     * Get Stockfish engine instance
+     */
+    getStockfish(): StockfishEngine;
     /**
      * Analyze the current game state and provide coaching guidance
      */
@@ -68,7 +74,11 @@ export declare class ChessCoach {
      */
     private getGeneralTips;
     /**
-     * Get Claude AI analysis of the last move
+     * Get Stockfish analysis of current position
+     */
+    getStockfishAnalysis(boardState: Board, currentTurn: Color, moveHistory: Move[]): Promise<StockfishAnalysis | null>;
+    /**
+     * Get comprehensive analysis combining Stockfish + Opening Book + Claude
      */
     analyzeLastMove(lastMove: Move, moveHistory: Move[], boardState: Board, currentTurn: Color): Promise<ClaudeAnalysisResponse>;
 }

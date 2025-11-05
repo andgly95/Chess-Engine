@@ -1,4 +1,5 @@
 import { Board, Move, Color } from './types.js';
+import { StockfishAnalysis } from './stockfish.js';
 export interface ClaudeConfig {
     apiKey: string;
     model: string;
@@ -10,6 +11,8 @@ export interface ClaudeAnalysisResponse {
     strategicPlan: string;
     suggestedMoves: string[];
     strategyTips: string[];
+    evaluation?: number;
+    mate?: number;
     error?: string;
 }
 export declare class ClaudeAPI {
@@ -18,6 +21,7 @@ export declare class ClaudeAPI {
     private readonly DEFAULT_MODEL;
     private readonly DEFAULT_MAX_TOKENS;
     private responseCache;
+    private readonly CACHE_VERSION;
     constructor();
     /**
      * Set the API configuration
@@ -35,6 +39,10 @@ export declare class ClaudeAPI {
      * Clear API configuration
      */
     clearConfig(): void;
+    /**
+     * Clear the analysis cache
+     */
+    clearCache(): void;
     /**
      * Save config to localStorage
      */
@@ -58,7 +66,11 @@ export declare class ClaudeAPI {
     /**
      * Analyze the last move made
      */
-    analyzeMove(lastMove: Move, moveHistory: Move[], boardState: Board, currentTurn: Color): Promise<ClaudeAnalysisResponse>;
+    analyzeMove(lastMove: Move, moveHistory: Move[], boardState: Board, currentTurn: Color, stockfishAnalysis?: StockfishAnalysis | null, openingContext?: {
+        name: string;
+        description: string;
+        theory: string;
+    } | null): Promise<ClaudeAnalysisResponse>;
     /**
      * Build prompt for move analysis
      */

@@ -19,6 +19,8 @@ export class ChessUI {
         this.historyElement = document.getElementById('move-history');
         this.promotionModal = document.getElementById('promotion-modal');
         this.guideContent = document.getElementById('guide-content');
+        this.evalBarFill = document.getElementById('eval-bar-fill');
+        this.evalScore = document.getElementById('eval-score');
         this.ai = new ChessAI('medium');
         this.coach = new ChessCoach();
         this.setupEventListeners();
@@ -554,8 +556,10 @@ export class ChessUI {
         const progressionEl = document.getElementById('opening-progression');
         if (!containerEl || !progressionEl)
             return;
-        // Hide if no progression data
-        if (!progression || progression.length === 0) {
+        // Filter to only show moves with named openings
+        const namedOpenings = progression.filter(item => item.openingName && item.openingName.trim() !== '');
+        // Hide if no named openings
+        if (!namedOpenings || namedOpenings.length === 0) {
             containerEl.style.display = 'none';
             return;
         }
@@ -563,7 +567,7 @@ export class ChessUI {
         containerEl.style.display = 'block';
         // Clear and populate progression
         progressionEl.innerHTML = '';
-        progression.forEach((item) => {
+        namedOpenings.forEach((item) => {
             const itemEl = document.createElement('div');
             itemEl.className = 'progression-item';
             const numberEl = document.createElement('div');
@@ -574,13 +578,7 @@ export class ChessUI {
             moveEl.textContent = item.movePlayed;
             const openingEl = document.createElement('div');
             openingEl.className = 'progression-opening';
-            if (item.openingName) {
-                openingEl.textContent = item.openingName;
-            }
-            else {
-                openingEl.textContent = 'Developing position...';
-                openingEl.classList.add('empty');
-            }
+            openingEl.textContent = item.openingName;
             itemEl.appendChild(numberEl);
             itemEl.appendChild(moveEl);
             itemEl.appendChild(openingEl);
@@ -629,6 +627,10 @@ export class ChessUI {
             // Hide loading
             loadingEl.style.display = 'none';
             if (!analysis.error) {
+                // Update evaluation bar with Stockfish evaluation
+                if (analysis.evaluation !== undefined) {
+                    this.updateEvaluationBar(analysis.evaluation, analysis.mate);
+                }
                 // Store the analysis
                 const moveNotation = this.moveToNotation(lastMove);
                 const entry = {
@@ -658,6 +660,32 @@ export class ChessUI {
             tacticalAnalysisEl.textContent = 'Analysis error';
             strategicPlanEl.textContent = 'Analysis error';
         }
+    }
+    /**
+     * Update evaluation bar based on Stockfish evaluation
+     * @param evaluation - Centipawn evaluation (positive = white advantage)
+     * @param mate - Mate in X moves (optional)
+     */
+    updateEvaluationBar(evaluation, mate) {
+        let displayText;
+        let heightPercentage;
+        if (mate !== undefined) {
+            // Mate detected
+            displayText = `M${mate > 0 ? '+' : ''}${mate}`;
+            heightPercentage = mate > 0 ? 95 : 5; // Max advantage
+        }
+        else {
+            // Convert centipawns to pawns
+            const pawns = evaluation / 100;
+            displayText = pawns > 0 ? `+${pawns.toFixed(1)}` : pawns.toFixed(1);
+            // Calculate bar height (50% = equal, clamped between 5% and 95%)
+            // Each pawn is worth about 10% of the bar
+            heightPercentage = 50 + (pawns * 10);
+            heightPercentage = Math.max(5, Math.min(95, heightPercentage));
+        }
+        // Update the bar
+        this.evalBarFill.style.height = `${heightPercentage}%`;
+        this.evalScore.textContent = displayText;
     }
 }
 //# sourceMappingURL=ui.js.map
