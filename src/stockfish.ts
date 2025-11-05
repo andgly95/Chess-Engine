@@ -138,8 +138,11 @@ export class StockfishEngine {
     depth: number = 15,
     timeMs: number = 1000
   ): Promise<StockfishAnalysis> {
+    console.log('🔧 Stockfish: analyzePosition called with FEN:', fen);
+    console.log('🔧 Stockfish: Initialized?', this.initialized, 'Engine?', !!this.engine);
+
     if (!this.initialized || !this.engine) {
-      console.warn('Stockfish engine not initialized, returning empty analysis');
+      console.warn('⚠️ Stockfish: Engine not initialized, returning empty analysis');
       return {
         bestMoves: [],
         evaluation: 0,
@@ -148,17 +151,24 @@ export class StockfishEngine {
     }
 
     // Set up position
+    console.log('🔧 Stockfish: Setting position...');
     await this.sendCommand(`position fen ${fen}`);
 
     // Start analysis
+    console.log('🔧 Stockfish: Starting analysis with depth', depth, 'and time', timeMs);
     this.messageBuffer = '';
     this.engine.postMessage(`go depth ${depth} movetime ${timeMs}`);
 
     // Wait for analysis to complete
     await new Promise((resolve) => setTimeout(resolve, timeMs + 500));
 
+    console.log('🔧 Stockfish: Analysis complete, buffer length:', this.messageBuffer.length);
+    console.log('🔧 Stockfish: Buffer preview:', this.messageBuffer.substring(0, 500));
+
     // Parse results
-    return this.parseAnalysis(this.messageBuffer);
+    const result = this.parseAnalysis(this.messageBuffer);
+    console.log('🔧 Stockfish: Parsed result:', result);
+    return result;
   }
 
   /**

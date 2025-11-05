@@ -461,12 +461,17 @@ export class ChessCoach {
      */
     async getStockfishAnalysis(boardState, currentTurn, moveHistory) {
         try {
+            console.log('📊 Coach: Converting board to FEN...');
             const fen = this.stockfish.boardToFEN(boardState, currentTurn, moveHistory);
+            console.log('📊 Coach: FEN:', fen);
+            console.log('📊 Coach: Calling Stockfish analyzePosition...');
             const analysis = await this.stockfish.analyzePosition(fen, 15, 1000);
+            console.log('📊 Coach: Analysis complete:', analysis);
             return analysis;
         }
         catch (error) {
-            console.error('Stockfish analysis error:', error);
+            console.error('❌ Coach: Stockfish analysis error:', error);
+            console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
             return null;
         }
     }

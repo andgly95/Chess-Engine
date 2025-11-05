@@ -759,6 +759,7 @@ export class ChessUI {
     strategicPlanEl.textContent = '';
 
     try {
+      console.log('🎯 UI: About to call coach.analyzeLastMove for move', moveNumber);
       const analysis = await this.coach.analyzeLastMove(
         lastMove,
         moveHistory,
@@ -766,12 +767,15 @@ export class ChessUI {
         state.currentTurn
       );
 
+      console.log('🎯 UI: Received analysis:', analysis);
+
       // Hide loading
       loadingEl.style.display = 'none';
 
       if (!analysis.error) {
         // Update evaluation bar with Stockfish evaluation
         if (analysis.evaluation !== undefined) {
+          console.log('🎯 UI: Updating eval bar with:', analysis.evaluation, 'mate:', analysis.mate);
           this.updateEvaluationBar(analysis.evaluation, analysis.mate);
         }
 
@@ -791,14 +795,18 @@ export class ChessUI {
         this.currentAnalysisIndex = this.moveAnalyses.length - 1;
 
         // Display the latest analysis (will update all sections)
+        console.log('🎯 UI: Displaying analysis and updating sections');
         this.displayCurrentAnalysis();
         this.updateClaudeSections(analysis);
       } else {
+        console.error('❌ UI: Analysis returned with error:', analysis.error);
         moveExplanationEl.textContent = analysis.moveExplanation;
         tacticalAnalysisEl.textContent = 'Error occurred during analysis';
         strategicPlanEl.textContent = 'Error occurred during analysis';
       }
     } catch (error) {
+      console.error('❌ UI: Exception caught in analyzeMoveWithClaude:', error);
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       loadingEl.style.display = 'none';
       moveExplanationEl.textContent = 'Error getting AI analysis. Please check your API key.';
       tacticalAnalysisEl.textContent = 'Analysis error';
