@@ -212,6 +212,90 @@ export class ChessUI {
 
     // Update cache count initially and on any analysis
     this.updateCacheCount();
+
+    // Setup draggable guide panel
+    this.setupDraggablePanel();
+  }
+
+  private setupDraggablePanel(): void {
+    const guidePanel = document.querySelector('.guide-panel') as HTMLElement;
+    const guideHeader = document.querySelector('.guide-header') as HTMLElement;
+
+    if (!guidePanel || !guideHeader) return;
+
+    // Don't enable dragging on mobile
+    if (window.innerWidth <= 768) return;
+
+    // Load saved position
+    const savedPos = localStorage.getItem('guide_panel_position');
+    if (savedPos) {
+      const { top, right } = JSON.parse(savedPos);
+      guidePanel.style.top = `${top}px`;
+      guidePanel.style.right = `${right}px`;
+    }
+
+    let isDragging = false;
+    let currentX = 0;
+    let currentY = 0;
+    let initialX = 0;
+    let initialY = 0;
+
+    const onMouseDown = (e: MouseEvent) => {
+      // Don't drag if clicking on buttons
+      if ((e.target as HTMLElement).tagName === 'BUTTON') return;
+
+      isDragging = true;
+      initialX = e.clientX;
+      initialY = e.clientY;
+
+      // Get current position
+      const rect = guidePanel.getBoundingClientRect();
+      currentX = rect.right - window.innerWidth;
+      currentY = rect.top;
+
+      guidePanel.style.transition = 'none';
+      document.body.style.cursor = 'grabbing';
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+
+      const deltaX = initialX - e.clientX;
+      const deltaY = e.clientY - initialY;
+
+      const newRight = currentX + deltaX;
+      const newTop = currentY + deltaY;
+
+      // Constrain to viewport
+      const maxRight = window.innerWidth - guidePanel.offsetWidth - 20;
+      const maxTop = window.innerHeight - guidePanel.offsetHeight - 20;
+
+      const constrainedRight = Math.max(-maxRight, Math.min(20, newRight));
+      const constrainedTop = Math.max(20, Math.min(maxTop, newTop));
+
+      guidePanel.style.right = `${-constrainedRight}px`;
+      guidePanel.style.top = `${constrainedTop}px`;
+    };
+
+    const onMouseUp = () => {
+      if (!isDragging) return;
+
+      isDragging = false;
+      guidePanel.style.transition = '';
+      document.body.style.cursor = '';
+
+      // Save position
+      const rect = guidePanel.getBoundingClientRect();
+      const position = {
+        top: rect.top,
+        right: window.innerWidth - rect.right
+      };
+      localStorage.setItem('guide_panel_position', JSON.stringify(position));
+    };
+
+    guideHeader.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
   }
 
   private applyTheme(theme: string): void {

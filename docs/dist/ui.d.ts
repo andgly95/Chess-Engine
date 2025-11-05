@@ -20,6 +20,7 @@ export declare class ChessUI {
     private currentAnalysisIndex;
     constructor(game: ChessGame);
     private setupEventListeners;
+    private setupDraggablePanel;
     private applyTheme;
     private updateCacheCount;
     private updateApiKeyStatus;
