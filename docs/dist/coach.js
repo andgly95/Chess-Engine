@@ -487,7 +487,10 @@ export class ChessCoach {
         let stockfishMoves = [];
         if (stockfishAnalysis && stockfishAnalysis.bestMoves.length > 0) {
             console.log('Converting', stockfishAnalysis.bestMoves.length, 'Stockfish moves to readable format');
-            stockfishMoves = stockfishAnalysis.bestMoves.map(move => {
+            // Filter out any moves with invalid UCI notation
+            const validMoves = stockfishAnalysis.bestMoves.filter(move => move.move && move.move.length >= 4);
+            console.log('Valid moves after filtering:', validMoves.length);
+            stockfishMoves = validMoves.map(move => {
                 const readable = this.stockfish.uciToAlgebraic(move.move, boardState);
                 const evalStr = move.mate !== undefined
                     ? `M${move.mate > 0 ? '+' : ''}${move.mate}`

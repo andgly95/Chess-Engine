@@ -213,7 +213,8 @@ export class StockfishEngine {
       const pvMoves = pvMatch[1].split(' ').filter(m => m.length > 0);
       const bestMove = pvMoves[0];
 
-      if (bestMove) {
+      // Validate bestMove is a proper UCI move (at least 4 chars: e.g., e2e4)
+      if (bestMove && bestMove.length >= 4) {
         moveMap.set(bestMove, {
           move: bestMove,
           score: score,
@@ -225,6 +226,8 @@ export class StockfishEngine {
         if (multipvMatch[1] === '1') {
           overallEval = score;
         }
+      } else if (bestMove) {
+        console.warn('⚠️ Skipping invalid UCI move from Stockfish:', bestMove, 'in line:', line);
       }
     }
 
@@ -314,6 +317,12 @@ export class StockfishEngine {
    * Convert UCI move to human-readable format
    */
   uciToAlgebraic(uciMove: string, board: Board): string {
+    // Validate input
+    if (!uciMove || uciMove.length < 4) {
+      console.warn('⚠️ Invalid UCI move:', uciMove);
+      return uciMove || '???';
+    }
+
     // UCI format: e2e4, e7e5q (with promotion)
     const fromFile = uciMove[0];
     const fromRank = uciMove[1];
