@@ -15,16 +15,18 @@ export interface ClaudeAnalysisResponse {
   strategicPlan: string;
   suggestedMoves: string[];
   strategyTips: string[];
+  evaluation?: number; // Stockfish evaluation in centipawns
+  mate?: number; // Mate in X moves (if applicable)
   error?: string;
 }
 
 export class ClaudeAPI {
   private config: ClaudeConfig | null = null;
   // Use proxy endpoint to avoid CORS issues
-  // When deployed to Netlify/Vercel, this will route through serverless function
+  // When deployed to Vercel, this will route through serverless function
   private readonly API_URL = window.location.hostname === 'localhost'
     ? 'http://localhost:3001/api/claude'  // Local development
-    : '/.netlify/functions/claude-proxy'; // Production (Netlify)
+    : '/api/claude-proxy'; // Production (Vercel)
   private readonly DEFAULT_MODEL = 'claude-sonnet-4-5-20250929';
   private readonly DEFAULT_MAX_TOKENS = 1024;
   private responseCache: Map<string, ClaudeAnalysisResponse> = new Map();
@@ -81,6 +83,13 @@ export class ClaudeAPI {
     this.responseCache.clear();
     localStorage.removeItem('chess_analysis_cache');
     console.log('Analysis cache cleared');
+  }
+
+  /**
+   * Get the number of cached entries
+   */
+  getCacheSize(): number {
+    return this.responseCache.size;
   }
 
   /**
@@ -167,7 +176,8 @@ export class ClaudeAPI {
     moveHistory: Move[],
     boardState: Board,
     currentTurn: Color,
-    stockfishAnalysis?: StockfishAnalysis | null
+    stockfishAnalysis?: StockfishAnalysis | null,
+    openingContext?: { name: string; description: string; theory: string } | null
   ): Promise<ClaudeAnalysisResponse> {
     if (!this.isConfigured()) {
       return {
@@ -189,7 +199,7 @@ export class ClaudeAPI {
     }
 
     try {
-      const prompt = this.buildMoveAnalysisPrompt(lastMove, moveHistory, boardState, currentTurn, stockfishAnalysis);
+      const prompt = this.buildMoveAnalysisPrompt(lastMove, moveHistory, boardState, currentTurn, stockfishAnalysis, openingContext);
       const response = await this.callClaudeAPI(prompt);
       const analysis = this.parseMoveAnalysis(response, stockfishAnalysis);
 
@@ -220,7 +230,8 @@ export class ClaudeAPI {
     moveHistory: Move[],
     boardState: Board,
     currentTurn: Color,
-    stockfishAnalysis?: StockfishAnalysis | null
+    stockfishAnalysis?: StockfishAnalysis | null,
+    openingContext?: { name: string; description: string; theory: string } | null
   ): string {
     const fen = this.boardToFEN(boardState, currentTurn);
     const moveNotation = this.moveToAlgebraic(lastMove);
@@ -229,14 +240,23 @@ export class ClaudeAPI {
 
     const historyPGN = this.movesToPGN(moveHistory);
 
+    // Build opening context section
+    let openingSection = '';
+    if (openingContext) {
+      openingSection = `\n\n**Opening Context:**
+- Opening: ${openingContext.name}
+- Theory: ${openingContext.description}
+- Principles: ${openingContext.theory}`;
+    }
+
     // Build Stockfish suggestions section
     let stockfishSection = '';
     if (stockfishAnalysis && stockfishAnalysis.bestMoves.length > 0) {
-      stockfishSection = '\n\n**Stockfish Top Moves:**\n';
+      stockfishSection = '\n\n**Stockfish Analysis:**\n';
       stockfishAnalysis.bestMoves.slice(0, 5).forEach((move, index) => {
         const evalStr = move.mate !== undefined
           ? `Mate in ${Math.abs(move.mate)}`
-          : `${(move.score / 100).toFixed(1)} pawns`;
+          : `${(move.score / 100).toFixed(1)}`;
 
         // Convert UCI to readable format
         const from = move.move.substring(0, 2);
@@ -246,7 +266,7 @@ export class ClaudeAPI {
 
         stockfishSection += `${index + 1}. ${moveStr} (${evalStr})\n`;
       });
-      stockfishSection += `\nPosition Evaluation: ${(stockfishAnalysis.evaluation / 100).toFixed(1)} (positive = white advantage)`;
+      stockfishSection += `\nEvaluation: ${(stockfishAnalysis.evaluation / 100).toFixed(1)} (+ favors white, - favors black)`;
     }
 
     const basePrompt = `You are an expert chess coach analyzing a game.
@@ -254,7 +274,7 @@ export class ClaudeAPI {
 Game State:
 - Move ${moveNumber}: ${moveColor} just played ${moveNotation}
 - Current position (FEN): ${fen}
-- Move history (PGN): ${historyPGN}${stockfishSection}
+- Move history (PGN): ${historyPGN}${openingSection}${stockfishSection}
 
 Analyze this move and provide:
 

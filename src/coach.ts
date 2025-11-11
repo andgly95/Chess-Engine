@@ -515,17 +515,22 @@ export class ChessCoach {
     moveHistory: Move[]
   ): Promise<StockfishAnalysis | null> {
     try {
+      console.log('📊 Coach: Converting board to FEN...');
       const fen = this.stockfish.boardToFEN(boardState, currentTurn, moveHistory);
+      console.log('📊 Coach: FEN:', fen);
+      console.log('📊 Coach: Calling Stockfish analyzePosition...');
       const analysis = await this.stockfish.analyzePosition(fen, 15, 1000);
+      console.log('📊 Coach: Analysis complete:', analysis);
       return analysis;
     } catch (error) {
-      console.error('Stockfish analysis error:', error);
+      console.error('❌ Coach: Stockfish analysis error:', error);
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       return null;
     }
   }
 
   /**
-   * Get Claude AI analysis of the last move (now enhanced with Stockfish)
+   * Get comprehensive analysis combining Stockfish + Opening Book + Claude
    */
   async analyzeLastMove(
     lastMove: Move,
@@ -533,16 +538,81 @@ export class ChessCoach {
     boardState: Board,
     currentTurn: Color
   ): Promise<ClaudeAnalysisResponse> {
-    // Get Stockfish analysis for the next player's move options
-    const stockfishAnalysis = await this.getStockfishAnalysis(boardState, currentTurn, moveHistory);
+    console.log('🔍 Starting analysis for move:', moveHistory.length);
 
-    // Pass Stockfish analysis to Claude for explanation
-    return await this.claudeAPI.analyzeMove(
-      lastMove,
-      moveHistory,
-      boardState,
-      currentTurn,
-      stockfishAnalysis
-    );
+    // ALWAYS get Stockfish analysis first (primary engine)
+    const stockfishAnalysis = await this.getStockfishAnalysis(boardState, currentTurn, moveHistory);
+    console.log('Stockfish analysis result:', stockfishAnalysis ? 'Success' : 'Failed');
+
+    // If we have Stockfish moves, convert them to readable format
+    let stockfishMoves: string[] = [];
+    if (stockfishAnalysis && stockfishAnalysis.bestMoves.length > 0) {
+      console.log('Converting', stockfishAnalysis.bestMoves.length, 'Stockfish moves to readable format');
+      // Filter out any moves with invalid UCI notation
+      const validMoves = stockfishAnalysis.bestMoves.filter(move => move.move && move.move.length >= 4);
+      console.log('Valid moves after filtering:', validMoves.length);
+
+      stockfishMoves = validMoves.map(move => {
+        const readable = this.stockfish.uciToAlgebraic(move.move, boardState);
+        const evalStr = move.mate !== undefined
+          ? `M${move.mate > 0 ? '+' : ''}${move.mate}`
+          : `${(move.score / 100).toFixed(1)}`;
+        return `${readable} (${evalStr})`;
+      });
+      console.log('Stockfish suggests:', stockfishMoves);
+    } else {
+      console.warn('⚠️ No Stockfish moves available');
+    }
+
+    // Get opening information if we're still in book
+    const moveSequence = this.convertMovesToNotation(moveHistory);
+    const detectedOpening = this.detectOpening(moveSequence);
+    const openingContext = detectedOpening ? {
+      name: detectedOpening.name,
+      description: detectedOpening.description,
+      theory: detectedOpening.tips?.join(' ') || ''
+    } : null;
+
+    // If Claude API is configured, get educational explanations
+    if (this.claudeAPI.isConfigured()) {
+      const response = await this.claudeAPI.analyzeMove(
+        lastMove,
+        moveHistory,
+        boardState,
+        currentTurn,
+        stockfishAnalysis,
+        openingContext
+      );
+
+      // Add Stockfish evaluation to response
+      if (stockfishAnalysis) {
+        response.evaluation = stockfishAnalysis.evaluation;
+        if (stockfishAnalysis.bestMoves.length > 0 && stockfishAnalysis.bestMoves[0].mate !== undefined) {
+          response.mate = stockfishAnalysis.bestMoves[0].mate;
+        }
+      }
+
+      return response;
+    }
+
+    // If no Claude API, return Stockfish-only analysis
+    return {
+      moveExplanation: openingContext
+        ? `Playing in the ${openingContext.name}. ${openingContext.description}`
+        : `Position evaluation: ${stockfishAnalysis ? (stockfishAnalysis.evaluation / 100).toFixed(1) : 'N/A'}`,
+      tacticalAnalysis: stockfishAnalysis && stockfishAnalysis.bestMoves.length > 0
+        ? `Stockfish suggests: ${stockfishMoves.slice(0, 3).join(', ')}`
+        : 'Analyzing position...',
+      strategicPlan: openingContext?.theory || 'Focus on piece development and king safety.',
+      suggestedMoves: stockfishMoves,
+      strategyTips: detectedOpening?.tips || [
+        'Control the center',
+        'Develop pieces quickly',
+        'Castle early',
+        'Connect your rooks'
+      ],
+      evaluation: stockfishAnalysis?.evaluation || 0,
+      mate: stockfishAnalysis?.bestMoves[0]?.mate
+    };
   }
 }

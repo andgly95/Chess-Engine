@@ -1,3 +1,37 @@
+/* CSS Variables for theming */
+:root {
+  --bg-primary: #121212;
+  --bg-secondary: #1a1a1a;
+  --bg-tertiary: #0d0d0d;
+  --text-primary: #f8f9fa;
+  --text-secondary: #c5cdd5;
+  --text-muted: #8b949e;
+  --border-color: #333333;
+  --border-light: #424242;
+  --accent-primary: #667eea;
+  --accent-hover: #5568d3;
+  --success-color: #10b981;
+  --danger-color: #ef4444;
+  --warning-color: #f59e0b;
+}
+
+/* Light theme */
+body.light-theme {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f5f5;
+  --bg-tertiary: #e8e8e8;
+  --text-primary: #1a1a1a;
+  --text-secondary: #4a4a4a;
+  --text-muted: #6b6b6b;
+  --border-color: #d0d0d0;
+  --border-light: #e0e0e0;
+  --accent-primary: #667eea;
+  --accent-hover: #5568d3;
+  --success-color: #10b981;
+  --danger-color: #ef4444;
+  --warning-color: #f59e0b;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -6,13 +40,15 @@
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #121212;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 20px;
   font-size: 16px;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .container {
@@ -22,7 +58,7 @@ body {
 
 header {
   text-align: center;
-  color: #f8f9fa;
+  color: var(--text-primary);
   margin-bottom: 30px;
 }
 
@@ -36,17 +72,63 @@ header h1 {
 
 .game-container {
   display: flex;
-  gap: 30px;
+  gap: 0;
   justify-content: center;
   align-items: flex-start;
   flex-wrap: wrap;
 }
 
+/* Evaluation Bar - Chess.com/Lichess style */
+.eval-bar-container {
+  width: 30px;
+  display: flex;
+  align-items: center;
+}
+
+.eval-bar {
+  width: 30px;
+  height: 580px;
+  background: #000;
+  position: relative;
+  border: 2px solid #333333;
+  border-radius: 4px 0 0 4px;
+  overflow: hidden;
+}
+
+.eval-bar-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: #fff;
+  transition: height 0.3s ease;
+  height: 50%; /* Start at equal (0.0 evaluation) */
+}
+
+.eval-score {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+  color: var(--accent-primary);
+  background: rgba(0, 0, 0, 0.8);
+  padding: 4px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+  z-index: 10;
+  pointer-events: none;
+}
+
 .board-container {
   background: #1e1e1e;
   padding: 24px;
-  border-radius: 4px;
+  border-radius: 0 4px 4px 0;
   border: 1px solid #333333;
+  border-left: none;
+  margin-right: 30px;
 }
 
 .chess-board {
@@ -66,6 +148,17 @@ header h1 {
   cursor: pointer;
   transition: all 0.2s ease;
   user-select: none;
+}
+
+/* Chess piece colors - fixed regardless of theme */
+.square[data-piece-color="white"] {
+  color: #f0f0f0;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.square[data-piece-color="black"] {
+  color: #2d2d2d;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.3);
 }
 
 .square.light {
@@ -388,14 +481,60 @@ header h1 {
   font-family: 'Courier New', monospace;
 }
 
-/* Chess Coach Guide Panel */
+/* Chess Coach Guide Panel - Floating Glassmorphic Overlay */
 .guide-panel {
-  background: #1e1e1e;
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 400px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
   padding: 24px;
+  border-radius: 12px;
+  border: 1px solid var(--border-light);
+  z-index: 1000;
+
+  /* Glassmorphism effect */
+  background: rgba(26, 26, 26, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+
+  /* Smooth transitions */
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Light theme glassmorphism */
+body.light-theme .guide-panel {
+  background: rgba(255, 255, 255, 0.75);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.guide-panel:hover {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+body.light-theme .guide-panel:hover {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+/* Custom scrollbar for guide panel */
+.guide-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.guide-panel::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
   border-radius: 4px;
-  border: 1px solid #333333;
-  min-width: 350px;
-  max-width: 400px;
+}
+
+.guide-panel::-webkit-scrollbar-thumb {
+  background: rgba(102, 126, 234, 0.5);
+  border-radius: 4px;
+}
+
+.guide-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 126, 234, 0.7);
 }
 
 .guide-header {
@@ -404,27 +543,56 @@ header h1 {
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 15px;
-  border-bottom: 1px solid #333333;
+  border-bottom: 1px solid var(--border-color);
+  cursor: grab;
+  user-select: none;
+  position: relative;
+}
+
+.guide-header:active {
+  cursor: grabbing;
+}
+
+/* Grab handle indicator */
+.guide-header::before {
+  content: '⋮⋮';
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  letter-spacing: -4px;
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+
+.guide-header:hover::before {
+  opacity: 1;
+  color: var(--accent-primary);
 }
 
 .guide-header h2 {
-  color: #f8f9fa;
+  color: var(--text-primary);
   font-size: 1.5rem;
   margin: 0;
   font-family: 'Courier New', monospace;
   text-transform: uppercase;
   letter-spacing: 2px;
   font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .toggle-btn {
   padding: 8px 14px;
-  background: #121212;
-  border: 1px solid #333333;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #c5cdd5;
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s ease;
   text-transform: uppercase;
@@ -433,9 +601,9 @@ header h1 {
 }
 
 .toggle-btn:hover {
-  background: #1e1e1e;
-  border-color: #667eea;
-  color: #667eea;
+  background: var(--bg-secondary);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
 }
 
 .guide-content {
@@ -449,7 +617,7 @@ header h1 {
 .guide-section {
   margin-bottom: 28px;
   padding-bottom: 22px;
-  border-bottom: 1px solid #333333;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .guide-section:last-child {
@@ -459,7 +627,7 @@ header h1 {
 }
 
 .guide-section h3 {
-  color: #c5cdd5;
+  color: var(--text-secondary);
   font-size: 1.15rem;
   margin-bottom: 14px;
   font-weight: 600;
@@ -473,14 +641,14 @@ header h1 {
   gap: 12px;
   margin-bottom: 10px;
   padding: 12px;
-  background: #121212;
-  border: 1px solid #333333;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
 }
 
 .guide-info .label {
   font-weight: 600;
-  color: #667eea;
+  color: var(--accent-primary);
   text-transform: uppercase;
   letter-spacing: 1px;
   font-family: 'Courier New', monospace;
@@ -488,18 +656,18 @@ header h1 {
 }
 
 .guide-info .value {
-  color: #f8f9fa;
+  color: var(--text-primary);
   font-weight: 500;
   font-size: 1rem;
 }
 
 .guide-description {
   padding: 14px;
-  background: #121212;
-  border-left: 3px solid #667eea;
+  background: var(--bg-tertiary);
+  border-left: 3px solid var(--accent-primary);
   border-radius: 4px;
   font-size: 1rem;
-  color: #f8f9fa;
+  color: var(--text-primary);
   line-height: 1.6;
 }
 
@@ -513,14 +681,14 @@ header h1 {
   display: flex;
   justify-content: space-between;
   padding: 12px;
-  background: #121212;
-  border: 1px solid #333333;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
 }
 
 .analysis-label {
   font-weight: 600;
-  color: #c5cdd5;
+  color: var(--text-secondary);
   font-size: 0.95rem;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -528,12 +696,12 @@ header h1 {
 }
 
 .analysis-value {
-  color: #667eea;
+  color: var(--accent-primary);
   font-weight: 600;
   font-size: 0.95rem;
 }
 
-/* Opening Progression - INTJ Design */
+/* Opening Progression */
 .opening-progression-container {
   margin-top: 15px;
   padding-top: 15px;
@@ -659,7 +827,7 @@ header h1 {
   50% { opacity: 0.5; }
 }
 
-/* Analysis Cards - INTJ Design */
+/* Analysis Cards */
 .analysis-card {
   background: #1e1e1e;
   border-radius: 4px;
@@ -737,8 +905,8 @@ header h1 {
 /* AI Settings */
 .ai-settings {
   padding: 14px;
-  background: #121212;
-  border: 1px solid #333333;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
 }
 
@@ -752,7 +920,7 @@ header h1 {
 .setting-item label {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #c5cdd5;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 1px;
   font-family: 'Courier New', monospace;
@@ -760,24 +928,59 @@ header h1 {
 
 .api-key-input {
   padding: 10px 12px;
-  border: 1px solid #333333;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   font-size: 0.95rem;
   font-family: 'Courier New', monospace;
-  background: #1e1e1e;
-  color: #f8f9fa;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
   transition: all 0.2s ease;
 }
 
 .api-key-input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: var(--accent-primary);
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+/* Theme Select */
+.theme-select {
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 0.95rem;
+  font-family: 'Courier New', monospace;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.theme-select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+/* Cache Controls */
+.cache-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cache-count {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-family: 'Courier New', monospace;
+  flex: 1;
+  min-width: 120px;
 }
 
 .btn-small {
   padding: 10px 18px;
-  background: #667eea;
+  background: var(--accent-primary);
   color: white;
   border: none;
   border-radius: 4px;
@@ -788,31 +991,41 @@ header h1 {
   text-transform: uppercase;
   letter-spacing: 1px;
   font-family: 'Courier New', monospace;
+  white-space: nowrap;
 }
 
 .btn-small:hover {
-  background: #764ba2;
+  background: var(--accent-hover);
 }
 
 .btn-small:active {
-  background: #5568d3;
+  background: var(--accent-hover);
+  transform: scale(0.98);
+}
+
+.btn-small.btn-danger {
+  background: var(--danger-color);
+}
+
+.btn-small.btn-danger:hover {
+  background: #dc2626;
 }
 
 .setting-status {
   padding: 10px 12px;
-  background: #1e1e1e;
-  border: 1px solid #333333;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   margin-bottom: 8px;
 }
 
 .status-text {
   font-size: 0.9rem;
-  color: #c5cdd5;
+  color: var(--text-secondary);
 }
 
 .status-text.success {
-  color: #28a745;
+  color: var(--success-color);
   font-weight: 600;
 }
 
@@ -969,8 +1182,25 @@ header h1 {
   }
 
   .guide-panel {
+    position: relative;
+    top: auto;
+    right: auto;
     width: 100%;
-    min-width: auto;
+    max-height: none;
+    margin-top: 20px;
+  }
+
+  /* Disable drag on mobile */
+  .guide-header {
+    cursor: default;
+  }
+
+  .guide-header:active {
+    cursor: default;
+  }
+
+  .guide-header::before {
+    display: none;
   }
 
   .control-group label {

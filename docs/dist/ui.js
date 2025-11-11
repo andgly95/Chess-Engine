@@ -19,6 +19,8 @@ export class ChessUI {
         this.historyElement = document.getElementById('move-history');
         this.promotionModal = document.getElementById('promotion-modal');
         this.guideContent = document.getElementById('guide-content');
+        this.evalBarFill = document.getElementById('eval-bar-fill');
+        this.evalScore = document.getElementById('eval-score');
         this.ai = new ChessAI('medium');
         this.coach = new ChessCoach();
         this.setupEventListeners();
@@ -138,20 +140,119 @@ export class ChessUI {
             this.updateApiKeyStatus();
         }
         else {
-            console.error('Could not find API key elements:', { saveApiKeyBtn, apiKeyInput, apiStatus });
+            console.warn('Could not find API key elements');
         }
-        // Setup analysis navigation buttons
-        const prevAnalysisBtn = document.getElementById('prev-analysis');
-        const nextAnalysisBtn = document.getElementById('next-analysis');
-        if (prevAnalysisBtn) {
-            prevAnalysisBtn.addEventListener('click', () => {
-                this.navigateAnalysis(-1);
+        // Setup theme switcher
+        const themeSelect = document.getElementById('theme-select');
+        if (themeSelect) {
+            // Load saved theme
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            themeSelect.value = savedTheme;
+            this.applyTheme(savedTheme);
+            themeSelect.addEventListener('change', () => {
+                const theme = themeSelect.value;
+                this.applyTheme(theme);
+                localStorage.setItem('theme', theme);
             });
         }
-        if (nextAnalysisBtn) {
-            nextAnalysisBtn.addEventListener('click', () => {
-                this.navigateAnalysis(1);
+        // Setup cache controls
+        const clearCacheBtn = document.getElementById('clear-cache-btn');
+        if (clearCacheBtn) {
+            clearCacheBtn.addEventListener('click', () => {
+                this.coach.getClaudeAPI().clearCache();
+                this.updateCacheCount();
+                // Visual feedback
+                clearCacheBtn.textContent = 'Cleared!';
+                setTimeout(() => {
+                    clearCacheBtn.textContent = 'Clear Cache';
+                }, 2000);
             });
+        }
+        // Update cache count initially and on any analysis
+        this.updateCacheCount();
+        // Setup draggable guide panel
+        this.setupDraggablePanel();
+    }
+    setupDraggablePanel() {
+        const guidePanel = document.querySelector('.guide-panel');
+        const guideHeader = document.querySelector('.guide-header');
+        if (!guidePanel || !guideHeader)
+            return;
+        // Don't enable dragging on mobile
+        if (window.innerWidth <= 768)
+            return;
+        // Load saved position
+        const savedPos = localStorage.getItem('guide_panel_position');
+        if (savedPos) {
+            const { top, right } = JSON.parse(savedPos);
+            guidePanel.style.top = `${top}px`;
+            guidePanel.style.right = `${right}px`;
+        }
+        let isDragging = false;
+        let currentX = 0;
+        let currentY = 0;
+        let initialX = 0;
+        let initialY = 0;
+        const onMouseDown = (e) => {
+            // Don't drag if clicking on buttons
+            if (e.target.tagName === 'BUTTON')
+                return;
+            isDragging = true;
+            initialX = e.clientX;
+            initialY = e.clientY;
+            // Get current position
+            const rect = guidePanel.getBoundingClientRect();
+            currentX = rect.right - window.innerWidth;
+            currentY = rect.top;
+            guidePanel.style.transition = 'none';
+            document.body.style.cursor = 'grabbing';
+        };
+        const onMouseMove = (e) => {
+            if (!isDragging)
+                return;
+            const deltaX = initialX - e.clientX;
+            const deltaY = e.clientY - initialY;
+            const newRight = currentX + deltaX;
+            const newTop = currentY + deltaY;
+            // Constrain to viewport
+            const maxRight = window.innerWidth - guidePanel.offsetWidth - 20;
+            const maxTop = window.innerHeight - guidePanel.offsetHeight - 20;
+            const constrainedRight = Math.max(-maxRight, Math.min(20, newRight));
+            const constrainedTop = Math.max(20, Math.min(maxTop, newTop));
+            guidePanel.style.right = `${-constrainedRight}px`;
+            guidePanel.style.top = `${constrainedTop}px`;
+        };
+        const onMouseUp = () => {
+            if (!isDragging)
+                return;
+            isDragging = false;
+            guidePanel.style.transition = '';
+            document.body.style.cursor = '';
+            // Save position
+            const rect = guidePanel.getBoundingClientRect();
+            const position = {
+                top: rect.top,
+                right: window.innerWidth - rect.right
+            };
+            localStorage.setItem('guide_panel_position', JSON.stringify(position));
+        };
+        guideHeader.addEventListener('mousedown', onMouseDown);
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    }
+    applyTheme(theme) {
+        if (theme === 'light') {
+            document.body.classList.add('light-theme');
+        }
+        else {
+            document.body.classList.remove('light-theme');
+        }
+    }
+    updateCacheCount() {
+        const cacheCountEl = document.getElementById('cache-count');
+        if (cacheCountEl) {
+            const count = this.coach.getClaudeAPI().getCacheSize();
+            cacheCountEl.textContent = `${count} cached ${count === 1 ? 'entry' : 'entries'}`;
         }
     }
     updateApiKeyStatus() {
@@ -296,6 +397,8 @@ export class ChessUI {
                 if (piece) {
                     square.textContent = getPieceSymbol(piece);
                     square.classList.add('has-piece');
+                    // Add data attribute for piece color styling
+                    square.setAttribute('data-piece-color', piece.color);
                 }
                 // Highlight selected square
                 if (this.selectedSquare &&
@@ -554,8 +657,10 @@ export class ChessUI {
         const progressionEl = document.getElementById('opening-progression');
         if (!containerEl || !progressionEl)
             return;
-        // Hide if no progression data
-        if (!progression || progression.length === 0) {
+        // Filter to only show moves with named openings
+        const namedOpenings = progression.filter(item => item.openingName && item.openingName.trim() !== '');
+        // Hide if no named openings
+        if (!namedOpenings || namedOpenings.length === 0) {
             containerEl.style.display = 'none';
             return;
         }
@@ -563,7 +668,7 @@ export class ChessUI {
         containerEl.style.display = 'block';
         // Clear and populate progression
         progressionEl.innerHTML = '';
-        progression.forEach((item) => {
+        namedOpenings.forEach((item) => {
             const itemEl = document.createElement('div');
             itemEl.className = 'progression-item';
             const numberEl = document.createElement('div');
@@ -574,13 +679,7 @@ export class ChessUI {
             moveEl.textContent = item.movePlayed;
             const openingEl = document.createElement('div');
             openingEl.className = 'progression-opening';
-            if (item.openingName) {
-                openingEl.textContent = item.openingName;
-            }
-            else {
-                openingEl.textContent = 'Developing position...';
-                openingEl.classList.add('empty');
-            }
+            openingEl.textContent = item.openingName;
             itemEl.appendChild(numberEl);
             itemEl.appendChild(moveEl);
             itemEl.appendChild(openingEl);
@@ -625,10 +724,17 @@ export class ChessUI {
         tacticalAnalysisEl.textContent = '';
         strategicPlanEl.textContent = '';
         try {
+            console.log('🎯 UI: About to call coach.analyzeLastMove for move', moveNumber);
             const analysis = await this.coach.analyzeLastMove(lastMove, moveHistory, state.board, state.currentTurn);
+            console.log('🎯 UI: Received analysis:', analysis);
             // Hide loading
             loadingEl.style.display = 'none';
             if (!analysis.error) {
+                // Update evaluation bar with Stockfish evaluation
+                if (analysis.evaluation !== undefined) {
+                    console.log('🎯 UI: Updating eval bar with:', analysis.evaluation, 'mate:', analysis.mate);
+                    this.updateEvaluationBar(analysis.evaluation, analysis.mate);
+                }
                 // Store the analysis
                 const moveNotation = this.moveToNotation(lastMove);
                 const entry = {
@@ -643,21 +749,53 @@ export class ChessUI {
                 this.moveAnalyses.push(entry);
                 this.currentAnalysisIndex = this.moveAnalyses.length - 1;
                 // Display the latest analysis (will update all sections)
+                console.log('🎯 UI: Displaying analysis and updating sections');
                 this.displayCurrentAnalysis();
                 this.updateClaudeSections(analysis);
+                // Update cache count after analysis
+                this.updateCacheCount();
             }
             else {
+                console.error('❌ UI: Analysis returned with error:', analysis.error);
                 moveExplanationEl.textContent = analysis.moveExplanation;
                 tacticalAnalysisEl.textContent = 'Error occurred during analysis';
                 strategicPlanEl.textContent = 'Error occurred during analysis';
             }
         }
         catch (error) {
+            console.error('❌ UI: Exception caught in analyzeMoveWithClaude:', error);
+            console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
             loadingEl.style.display = 'none';
             moveExplanationEl.textContent = 'Error getting AI analysis. Please check your API key.';
             tacticalAnalysisEl.textContent = 'Analysis error';
             strategicPlanEl.textContent = 'Analysis error';
         }
+    }
+    /**
+     * Update evaluation bar based on Stockfish evaluation
+     * @param evaluation - Centipawn evaluation (positive = white advantage)
+     * @param mate - Mate in X moves (optional)
+     */
+    updateEvaluationBar(evaluation, mate) {
+        let displayText;
+        let heightPercentage;
+        if (mate !== undefined) {
+            // Mate detected
+            displayText = `M${mate > 0 ? '+' : ''}${mate}`;
+            heightPercentage = mate > 0 ? 95 : 5; // Max advantage
+        }
+        else {
+            // Convert centipawns to pawns
+            const pawns = evaluation / 100;
+            displayText = pawns > 0 ? `+${pawns.toFixed(1)}` : pawns.toFixed(1);
+            // Calculate bar height (50% = equal, clamped between 5% and 95%)
+            // Each pawn is worth about 10% of the bar
+            heightPercentage = 50 + (pawns * 10);
+            heightPercentage = Math.max(5, Math.min(95, heightPercentage));
+        }
+        // Update the bar
+        this.evalBarFill.style.height = `${heightPercentage}%`;
+        this.evalScore.textContent = displayText;
     }
 }
 //# sourceMappingURL=ui.js.map

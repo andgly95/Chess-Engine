@@ -3,16 +3,17 @@ export class ClaudeAPI {
     constructor() {
         this.config = null;
         // Use proxy endpoint to avoid CORS issues
-        // When deployed to Netlify/Vercel, this will route through serverless function
+        // When deployed to Vercel, this will route through serverless function
         this.API_URL = window.location.hostname === 'localhost'
             ? 'http://localhost:3001/api/claude' // Local development
-            : '/.netlify/functions/claude-proxy'; // Production (Netlify)
+            : '/api/claude-proxy'; // Production (Vercel)
         this.DEFAULT_MODEL = 'claude-sonnet-4-5-20250929';
         this.DEFAULT_MAX_TOKENS = 1024;
         this.responseCache = new Map();
+        this.CACHE_VERSION = '2.0-stockfish'; // Increment to invalidate old cache
         // Try to load API key from localStorage
         this.loadConfig();
-        // Load cached responses from localStorage
+        // Load cached responses from localStorage (with version check)
         this.loadCache();
     }
     /**
@@ -50,6 +51,20 @@ export class ClaudeAPI {
         localStorage.removeItem('chess_claude_config');
     }
     /**
+     * Clear the analysis cache
+     */
+    clearCache() {
+        this.responseCache.clear();
+        localStorage.removeItem('chess_analysis_cache');
+        console.log('Analysis cache cleared');
+    }
+    /**
+     * Get the number of cached entries
+     */
+    getCacheSize() {
+        return this.responseCache.size;
+    }
+    /**
      * Save config to localStorage
      */
     saveConfig() {
@@ -80,11 +95,19 @@ export class ClaudeAPI {
      */
     loadCache() {
         try {
+            // Check cache version first
+            const cacheVersion = localStorage.getItem('chess_analysis_cache_version');
+            if (cacheVersion !== this.CACHE_VERSION) {
+                console.log('Cache version mismatch. Clearing old cache.');
+                this.clearCache();
+                localStorage.setItem('chess_analysis_cache_version', this.CACHE_VERSION);
+                return;
+            }
             const saved = localStorage.getItem('chess_analysis_cache');
             if (saved) {
                 const cacheArray = JSON.parse(saved);
                 this.responseCache = new Map(cacheArray);
-                console.log('Loaded', this.responseCache.size, 'cached responses');
+                console.log('Loaded', this.responseCache.size, 'cached responses (v' + this.CACHE_VERSION + ')');
             }
         }
         catch (e) {
@@ -116,7 +139,7 @@ export class ClaudeAPI {
     /**
      * Analyze the last move made
      */
-    async analyzeMove(lastMove, moveHistory, boardState, currentTurn) {
+    async analyzeMove(lastMove, moveHistory, boardState, currentTurn, stockfishAnalysis, openingContext) {
         if (!this.isConfigured()) {
             return {
                 moveExplanation: 'Please set your Claude API key in the AI Settings section below.',
@@ -135,9 +158,9 @@ export class ClaudeAPI {
             return cached;
         }
         try {
-            const prompt = this.buildMoveAnalysisPrompt(lastMove, moveHistory, boardState, currentTurn);
+            const prompt = this.buildMoveAnalysisPrompt(lastMove, moveHistory, boardState, currentTurn, stockfishAnalysis, openingContext);
             const response = await this.callClaudeAPI(prompt);
-            const analysis = this.parseMoveAnalysis(response);
+            const analysis = this.parseMoveAnalysis(response, stockfishAnalysis);
             // Cache the response
             this.responseCache.set(cacheKey, analysis);
             this.saveCache();
@@ -159,18 +182,43 @@ export class ClaudeAPI {
     /**
      * Build prompt for move analysis
      */
-    buildMoveAnalysisPrompt(lastMove, moveHistory, boardState, currentTurn) {
+    buildMoveAnalysisPrompt(lastMove, moveHistory, boardState, currentTurn, stockfishAnalysis, openingContext) {
         const fen = this.boardToFEN(boardState, currentTurn);
         const moveNotation = this.moveToAlgebraic(lastMove);
         const moveNumber = Math.floor(moveHistory.length / 2) + 1;
         const moveColor = lastMove.color;
         const historyPGN = this.movesToPGN(moveHistory);
-        return `You are an expert chess coach analyzing a game.
+        // Build opening context section
+        let openingSection = '';
+        if (openingContext) {
+            openingSection = `\n\n**Opening Context:**
+- Opening: ${openingContext.name}
+- Theory: ${openingContext.description}
+- Principles: ${openingContext.theory}`;
+        }
+        // Build Stockfish suggestions section
+        let stockfishSection = '';
+        if (stockfishAnalysis && stockfishAnalysis.bestMoves.length > 0) {
+            stockfishSection = '\n\n**Stockfish Analysis:**\n';
+            stockfishAnalysis.bestMoves.slice(0, 5).forEach((move, index) => {
+                const evalStr = move.mate !== undefined
+                    ? `Mate in ${Math.abs(move.mate)}`
+                    : `${(move.score / 100).toFixed(1)}`;
+                // Convert UCI to readable format
+                const from = move.move.substring(0, 2);
+                const to = move.move.substring(2, 4);
+                const promotion = move.move[4] ? `=${move.move[4].toUpperCase()}` : '';
+                const moveStr = `${from}-${to}${promotion}`;
+                stockfishSection += `${index + 1}. ${moveStr} (${evalStr})\n`;
+            });
+            stockfishSection += `\nEvaluation: ${(stockfishAnalysis.evaluation / 100).toFixed(1)} (+ favors white, - favors black)`;
+        }
+        const basePrompt = `You are an expert chess coach analyzing a game.
 
 Game State:
 - Move ${moveNumber}: ${moveColor} just played ${moveNotation}
 - Current position (FEN): ${fen}
-- Move history (PGN): ${historyPGN}
+- Move history (PGN): ${historyPGN}${openingSection}${stockfishSection}
 
 Analyze this move and provide:
 
@@ -178,13 +226,26 @@ Analyze this move and provide:
 
 2. **Tactical Elements** (1-2 sentences): Are there any tactical threats, opportunities, or vulnerabilities created by this move?
 
-3. **Strategic Plan** (1-2 sentences): What should the opponent consider in response? What's the best continuation?
+3. **Strategic Plan** (1-2 sentences): What should ${currentTurn} consider in response? What's the best continuation?`;
+        // Adjust suggested moves section based on whether we have Stockfish
+        if (stockfishSection) {
+            return basePrompt + `
 
-4. **Suggested Moves** (2-4 moves): Provide specific chess moves in algebraic notation that the opponent should consider. Use proper notation (N for knight, B for bishop, R for rook, Q for queen, K for king).
+4. **Suggested Moves** (2-4 moves): Using the Stockfish analysis above, explain in simple chess notation (like "Nf3", "d4", etc.) why the top moves are good. Convert the UCI notation above to proper algebraic notation.
 
 5. **Strategy Tips** (2-4 tips): Provide practical strategic principles or tips relevant to this position.
 
 Keep your response concise, educational, and friendly. Focus on helping a player understand chess principles.`;
+        }
+        else {
+            return basePrompt + `
+
+4. **Suggested Moves** (2-4 moves): Provide specific chess moves in algebraic notation that ${currentTurn} should consider. Use proper notation (N for knight, B for bishop, R for rook, Q for queen, K for king).
+
+5. **Strategy Tips** (2-4 tips): Provide practical strategic principles or tips relevant to this position.
+
+Keep your response concise, educational, and friendly. Focus on helping a player understand chess principles.`;
+        }
     }
     /**
      * Get tool definition for structured output
@@ -280,14 +341,26 @@ Keep your response concise, educational, and friendly. Focus on helping a player
     /**
      * Parse Claude's response
      */
-    parseMoveAnalysis(response) {
+    parseMoveAnalysis(response, stockfishAnalysis) {
         // Handle structured output from tool use
         if (response.moveExplanation && response.tacticalAnalysis && response.strategicPlan) {
+            let suggestedMoves = response.suggestedMoves || [];
+            // If we have Stockfish analysis and Claude didn't provide moves, use Stockfish moves
+            if (suggestedMoves.length === 0 && stockfishAnalysis && stockfishAnalysis.bestMoves.length > 0) {
+                suggestedMoves = stockfishAnalysis.bestMoves.slice(0, 4).map(move => {
+                    const from = move.move.substring(0, 2);
+                    const to = move.move.substring(2, 4);
+                    const evalStr = move.mate !== undefined
+                        ? `(M${Math.abs(move.mate)})`
+                        : `(${(move.score / 100).toFixed(1)})`;
+                    return `${from}-${to} ${evalStr}`;
+                });
+            }
             return {
                 moveExplanation: response.moveExplanation,
                 tacticalAnalysis: response.tacticalAnalysis,
                 strategicPlan: response.strategicPlan,
-                suggestedMoves: response.suggestedMoves || [],
+                suggestedMoves: suggestedMoves,
                 strategyTips: response.strategyTips || []
             };
         }

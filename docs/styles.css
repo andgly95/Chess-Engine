@@ -1,3 +1,37 @@
+/* CSS Variables for theming */
+:root {
+  --bg-primary: #121212;
+  --bg-secondary: #1a1a1a;
+  --bg-tertiary: #0d0d0d;
+  --text-primary: #f8f9fa;
+  --text-secondary: #c5cdd5;
+  --text-muted: #8b949e;
+  --border-color: #333333;
+  --border-light: #424242;
+  --accent-primary: #667eea;
+  --accent-hover: #5568d3;
+  --success-color: #10b981;
+  --danger-color: #ef4444;
+  --warning-color: #f59e0b;
+}
+
+/* Light theme */
+body.light-theme {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f5f5;
+  --bg-tertiary: #e8e8e8;
+  --text-primary: #1a1a1a;
+  --text-secondary: #4a4a4a;
+  --text-muted: #6b6b6b;
+  --border-color: #d0d0d0;
+  --border-light: #e0e0e0;
+  --accent-primary: #667eea;
+  --accent-hover: #5568d3;
+  --success-color: #10b981;
+  --danger-color: #ef4444;
+  --warning-color: #f59e0b;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -6,12 +40,15 @@
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #0d0d0d;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 20px;
+  font-size: 16px;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .container {
@@ -21,7 +58,7 @@ body {
 
 header {
   text-align: center;
-  color: #e9ecef;
+  color: var(--text-primary);
   margin-bottom: 30px;
 }
 
@@ -35,24 +72,70 @@ header h1 {
 
 .game-container {
   display: flex;
-  gap: 30px;
+  gap: 0;
   justify-content: center;
   align-items: flex-start;
   flex-wrap: wrap;
 }
 
+/* Evaluation Bar - Chess.com/Lichess style */
+.eval-bar-container {
+  width: 30px;
+  display: flex;
+  align-items: center;
+}
+
+.eval-bar {
+  width: 30px;
+  height: 580px;
+  background: #000;
+  position: relative;
+  border: 2px solid #333333;
+  border-radius: 4px 0 0 4px;
+  overflow: hidden;
+}
+
+.eval-bar-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: #fff;
+  transition: height 0.3s ease;
+  height: 50%; /* Start at equal (0.0 evaluation) */
+}
+
+.eval-score {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+  color: var(--accent-primary);
+  background: rgba(0, 0, 0, 0.8);
+  padding: 4px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+  z-index: 10;
+  pointer-events: none;
+}
+
 .board-container {
-  background: #1a1a1a;
-  padding: 20px;
-  border-radius: 4px;
-  border: 1px solid #2a2a2a;
+  background: #1e1e1e;
+  padding: 24px;
+  border-radius: 0 4px 4px 0;
+  border: 1px solid #333333;
+  border-left: none;
+  margin-right: 30px;
 }
 
 .chess-board {
   display: grid;
   grid-template-columns: repeat(8, 70px);
   grid-template-rows: repeat(8, 70px);
-  border: 2px solid #2a2a2a;
+  border: 2px solid #333333;
 }
 
 .square {
@@ -65,6 +148,17 @@ header h1 {
   cursor: pointer;
   transition: all 0.2s ease;
   user-select: none;
+}
+
+/* Chess piece colors - fixed regardless of theme */
+.square[data-piece-color="white"] {
+  color: #f0f0f0;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.square[data-piece-color="black"] {
+  color: #2d2d2d;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.3);
 }
 
 .square.light {
@@ -111,10 +205,10 @@ header h1 {
 }
 
 .info-panel {
-  background: #1a1a1a;
-  padding: 20px;
+  background: #1e1e1e;
+  padding: 24px;
   border-radius: 4px;
-  border: 1px solid #2a2a2a;
+  border: 1px solid #333333;
   min-width: 300px;
   max-width: 400px;
 }
@@ -124,7 +218,7 @@ header h1 {
 }
 
 .status-section h2 {
-  color: #e9ecef;
+  color: #f8f9fa;
   margin-bottom: 15px;
   font-size: 1.5rem;
   font-family: 'Courier New', monospace;
@@ -134,15 +228,16 @@ header h1 {
 }
 
 .game-status {
-  padding: 15px;
-  background: #0d0d0d;
-  border: 1px solid #2a2a2a;
+  padding: 16px;
+  background: #121212;
+  border: 1px solid #333333;
   border-radius: 4px;
-  font-size: 1.1rem;
-  color: #e9ecef;
+  font-size: 1.15rem;
+  color: #f8f9fa;
   font-weight: 500;
   margin-bottom: 15px;
   text-align: center;
+  line-height: 1.5;
 }
 
 .game-status.check {
@@ -160,9 +255,9 @@ header h1 {
 
 .game-controls {
   margin: 20px 0;
-  padding: 15px;
-  background: #0d0d0d;
-  border: 1px solid #2a2a2a;
+  padding: 16px;
+  background: #121212;
+  border: 1px solid #333333;
   border-radius: 4px;
 }
 
@@ -176,10 +271,10 @@ header h1 {
 
 .control-group label {
   display: block;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  color: #adb5bd;
-  margin-bottom: 5px;
+  color: #c5cdd5;
+  margin-bottom: 6px;
   text-transform: uppercase;
   letter-spacing: 1px;
   font-family: 'Courier New', monospace;
@@ -187,14 +282,14 @@ header h1 {
 
 .control-select {
   width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #2a2a2a;
+  padding: 10px 12px;
+  border: 1px solid #333333;
   border-radius: 4px;
-  font-size: 0.95rem;
-  background: #0d0d0d;
-  color: #e9ecef;
+  font-size: 1rem;
+  background: #121212;
+  color: #f8f9fa;
   cursor: pointer;
-  transition: border-color 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .control-select:hover {
@@ -204,19 +299,20 @@ header h1 {
 .control-select:focus {
   outline: none;
   border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
 }
 
 .btn {
   width: 100%;
-  padding: 12px 24px;
+  padding: 14px 24px;
   background: #667eea;
   color: white;
   border: none;
   border-radius: 4px;
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: all 0.2s ease;
   text-transform: uppercase;
   letter-spacing: 1px;
   font-family: 'Courier New', monospace;
@@ -231,7 +327,7 @@ header h1 {
 }
 
 .history-section h2 {
-  color: #e9ecef;
+  color: #f8f9fa;
   margin-bottom: 15px;
   font-size: 1.5rem;
   font-family: 'Courier New', monospace;
@@ -243,22 +339,23 @@ header h1 {
 .move-history {
   max-height: 400px;
   overflow-y: auto;
-  background: #0d0d0d;
-  border: 1px solid #2a2a2a;
+  background: #121212;
+  border: 1px solid #333333;
   border-radius: 4px;
-  padding: 15px;
+  padding: 16px;
 }
 
 .move-entry {
-  padding: 8px;
-  margin-bottom: 5px;
-  background: #1a1a1a;
-  border: 1px solid #2a2a2a;
+  padding: 10px;
+  margin-bottom: 6px;
+  background: #1e1e1e;
+  border: 1px solid #333333;
   border-radius: 3px;
   font-family: 'Courier New', monospace;
-  font-size: 0.95rem;
+  font-size: 1rem;
   display: flex;
-  gap: 10px;
+  gap: 12px;
+  line-height: 1.5;
 }
 
 .move-number {
@@ -268,7 +365,7 @@ header h1 {
 }
 
 .move-notation {
-  color: #e9ecef;
+  color: #f8f9fa;
 }
 
 .move-history::-webkit-scrollbar {
@@ -276,12 +373,12 @@ header h1 {
 }
 
 .move-history::-webkit-scrollbar-track {
-  background: #0d0d0d;
+  background: #121212;
   border-radius: 10px;
 }
 
 .move-history::-webkit-scrollbar-thumb {
-  background: #2a2a2a;
+  background: #333333;
   border-radius: 10px;
 }
 
@@ -318,8 +415,8 @@ header h1 {
 }
 
 .modal-content {
-  background: #1a1a1a;
-  border: 1px solid #2a2a2a;
+  background: #1e1e1e;
+  border: 1px solid #333333;
   padding: 40px;
   border-radius: 8px;
   text-align: center;
@@ -338,7 +435,7 @@ header h1 {
 }
 
 .modal-content h2 {
-  color: #e9ecef;
+  color: #f8f9fa;
   margin-bottom: 30px;
   font-size: 1.8rem;
   font-family: 'Courier New', monospace;
@@ -358,16 +455,17 @@ header h1 {
   align-items: center;
   gap: 10px;
   padding: 20px;
-  background: #0d0d0d;
+  background: #121212;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
-  border: 2px solid #2a2a2a;
+  border: 2px solid #333333;
 }
 
 .promotion-piece:hover {
-  background: #1a1a1a;
+  background: #1e1e1e;
   border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
 }
 
 .promotion-piece .piece-symbol {
@@ -375,22 +473,68 @@ header h1 {
 }
 
 .promotion-piece .piece-name {
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 600;
-  color: #adb5bd;
+  color: #c5cdd5;
   text-transform: uppercase;
   letter-spacing: 1px;
   font-family: 'Courier New', monospace;
 }
 
-/* Chess Coach Guide Panel */
+/* Chess Coach Guide Panel - Floating Glassmorphic Overlay */
 .guide-panel {
-  background: #1a1a1a;
-  padding: 20px;
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 400px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid var(--border-light);
+  z-index: 1000;
+
+  /* Glassmorphism effect */
+  background: rgba(26, 26, 26, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+
+  /* Smooth transitions */
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Light theme glassmorphism */
+body.light-theme .guide-panel {
+  background: rgba(255, 255, 255, 0.75);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.guide-panel:hover {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+body.light-theme .guide-panel:hover {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+/* Custom scrollbar for guide panel */
+.guide-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.guide-panel::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
   border-radius: 4px;
-  border: 1px solid #2a2a2a;
-  min-width: 350px;
-  max-width: 400px;
+}
+
+.guide-panel::-webkit-scrollbar-thumb {
+  background: rgba(102, 126, 234, 0.5);
+  border-radius: 4px;
+}
+
+.guide-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 126, 234, 0.7);
 }
 
 .guide-header {
@@ -399,27 +543,56 @@ header h1 {
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 15px;
-  border-bottom: 1px solid #2a2a2a;
+  border-bottom: 1px solid var(--border-color);
+  cursor: grab;
+  user-select: none;
+  position: relative;
+}
+
+.guide-header:active {
+  cursor: grabbing;
+}
+
+/* Grab handle indicator */
+.guide-header::before {
+  content: '⋮⋮';
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  letter-spacing: -4px;
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+
+.guide-header:hover::before {
+  opacity: 1;
+  color: var(--accent-primary);
 }
 
 .guide-header h2 {
-  color: #e9ecef;
+  color: var(--text-primary);
   font-size: 1.5rem;
   margin: 0;
   font-family: 'Courier New', monospace;
   text-transform: uppercase;
   letter-spacing: 2px;
   font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .toggle-btn {
-  padding: 6px 12px;
-  background: #0d0d0d;
-  border: 1px solid #2a2a2a;
+  padding: 8px 14px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  color: #adb5bd;
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s ease;
   text-transform: uppercase;
@@ -428,9 +601,9 @@ header h1 {
 }
 
 .toggle-btn:hover {
-  background: #1a1a1a;
-  border-color: #667eea;
-  color: #667eea;
+  background: var(--bg-secondary);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
 }
 
 .guide-content {
@@ -442,9 +615,9 @@ header h1 {
 }
 
 .guide-section {
-  margin-bottom: 25px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #2a2a2a;
+  margin-bottom: 28px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .guide-section:last-child {
@@ -454,9 +627,9 @@ header h1 {
 }
 
 .guide-section h3 {
-  color: #adb5bd;
-  font-size: 1.1rem;
-  margin-bottom: 12px;
+  color: var(--text-secondary);
+  font-size: 1.15rem;
+  margin-bottom: 14px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1.5px;
@@ -465,36 +638,37 @@ header h1 {
 
 .guide-info {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 10px;
-  padding: 10px;
-  background: #0d0d0d;
-  border: 1px solid #2a2a2a;
+  padding: 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
 }
 
 .guide-info .label {
   font-weight: 600;
-  color: #667eea;
+  color: var(--accent-primary);
   text-transform: uppercase;
   letter-spacing: 1px;
   font-family: 'Courier New', monospace;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
 }
 
 .guide-info .value {
-  color: #e9ecef;
+  color: var(--text-primary);
   font-weight: 500;
+  font-size: 1rem;
 }
 
 .guide-description {
-  padding: 12px;
-  background: #0d0d0d;
-  border-left: 2px solid #667eea;
+  padding: 14px;
+  background: var(--bg-tertiary);
+  border-left: 3px solid var(--accent-primary);
   border-radius: 4px;
-  font-size: 0.95rem;
-  color: #e9ecef;
-  line-height: 1.5;
+  font-size: 1rem;
+  color: var(--text-primary);
+  line-height: 1.6;
 }
 
 .guide-analysis {
@@ -506,38 +680,38 @@ header h1 {
 .analysis-item {
   display: flex;
   justify-content: space-between;
-  padding: 10px;
-  background: #0d0d0d;
-  border: 1px solid #2a2a2a;
+  padding: 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
 }
 
 .analysis-label {
   font-weight: 600;
-  color: #adb5bd;
-  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
   text-transform: uppercase;
   letter-spacing: 1px;
   font-family: 'Courier New', monospace;
 }
 
 .analysis-value {
-  color: #667eea;
+  color: var(--accent-primary);
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
 }
 
-/* Opening Progression - INTJ Design */
+/* Opening Progression */
 .opening-progression-container {
   margin-top: 15px;
   padding-top: 15px;
-  border-top: 1px solid #2a2a2a;
+  border-top: 1px solid #333333;
 }
 
 .progression-title {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  color: #6c757d;
+  color: #8b95a1;
   margin-bottom: 10px;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -555,9 +729,9 @@ header h1 {
   display: grid;
   grid-template-columns: 30px 45px 1fr;
   gap: 12px;
-  padding: 8px 10px;
-  background: #1a1a1a;
-  border-left: 2px solid #667eea;
+  padding: 10px 12px;
+  background: #1e1e1e;
+  border-left: 3px solid #667eea;
   transition: border-left-color 0.1s ease;
 }
 
@@ -567,7 +741,7 @@ header h1 {
 }
 
 .progression-number {
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   font-weight: 700;
   color: #667eea;
   text-align: right;
@@ -575,14 +749,14 @@ header h1 {
 
 .progression-move {
   font-weight: 600;
-  color: #adb5bd;
-  font-size: 0.8rem;
+  color: #c5cdd5;
+  font-size: 0.9rem;
 }
 
 .progression-opening {
-  font-size: 0.8rem;
-  color: #e9ecef;
-  line-height: 1.2;
+  font-size: 0.9rem;
+  color: #f8f9fa;
+  line-height: 1.4;
 }
 
 .suggested-moves {
@@ -592,26 +766,27 @@ header h1 {
 }
 
 .move-suggestion {
-  padding: 10px 12px;
-  background: #0d0d0d;
-  border-left: 2px solid #667eea;
+  padding: 12px 14px;
+  background: #121212;
+  border-left: 3px solid #667eea;
   border-radius: 4px;
-  font-size: 0.95rem;
-  color: #e9ecef;
+  font-size: 1rem;
+  color: #f8f9fa;
   font-weight: 500;
   font-family: 'Courier New', monospace;
+  line-height: 1.5;
 }
 
 .move-suggestion.best {
-  background: #0d0d0d;
+  background: #121212;
   border-left-color: #28a745;
-  color: #e9ecef;
+  color: #f8f9fa;
 }
 
 .strategy-tips {
-  background: #0d0d0d;
-  border: 1px solid #2a2a2a;
-  padding: 12px;
+  background: #121212;
+  border: 1px solid #333333;
+  padding: 14px;
   border-radius: 4px;
 }
 
@@ -621,10 +796,10 @@ header h1 {
 }
 
 .strategy-tips li {
-  color: #e9ecef;
-  font-size: 0.9rem;
+  color: #f8f9fa;
+  font-size: 1rem;
   line-height: 1.8;
-  margin-bottom: 5px;
+  margin-bottom: 8px;
 }
 
 .strategy-tips li:last-child {
@@ -652,11 +827,11 @@ header h1 {
   50% { opacity: 0.5; }
 }
 
-/* Analysis Cards - INTJ Design */
+/* Analysis Cards */
 .analysis-card {
-  background: #1a1a1a;
+  background: #1e1e1e;
   border-radius: 4px;
-  border: 1px solid #2a2a2a;
+  border: 1px solid #333333;
   overflow: hidden;
   transition: border-color 0.1s ease;
 }
@@ -668,14 +843,14 @@ header h1 {
 .analysis-card-header {
   display: flex;
   align-items: center;
-  padding: 10px 12px;
-  background: #0d0d0d;
-  border-bottom: 1px solid #2a2a2a;
+  padding: 12px 14px;
+  background: #121212;
+  border-bottom: 1px solid #333333;
 }
 
 .analysis-label-text {
   font-family: 'Courier New', monospace;
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   font-weight: 700;
   color: #667eea;
   text-transform: uppercase;
@@ -695,43 +870,43 @@ header h1 {
 }
 
 .analysis-card-content {
-  padding: 12px;
-  background: #1a1a1a;
-  font-size: 0.9rem;
-  color: #e9ecef;
-  line-height: 1.6;
+  padding: 14px;
+  background: #1e1e1e;
+  font-size: 1rem;
+  color: #f8f9fa;
+  line-height: 1.7;
   min-height: 50px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .analysis-card-content:empty::before {
   content: 'Waiting for analysis...';
-  color: #adb5bd;
+  color: #c5cdd5;
   font-style: italic;
 }
 
 /* Keep old styles for backward compatibility */
 .move-explanation {
-  padding: 12px;
-  background: #0d0d0d;
-  border: 1px solid #2a2a2a;
+  padding: 14px;
+  background: #121212;
+  border: 1px solid #333333;
   border-radius: 4px;
-  font-size: 0.95rem;
-  color: #e9ecef;
-  line-height: 1.6;
+  font-size: 1rem;
+  color: #f8f9fa;
+  line-height: 1.7;
   min-height: 60px;
 }
 
 .move-explanation.ai-response {
-  background: #0d0d0d;
-  border-left: 2px solid #667eea;
+  background: #121212;
+  border-left: 3px solid #667eea;
 }
 
 /* AI Settings */
 .ai-settings {
-  padding: 12px;
-  background: #0d0d0d;
-  border: 1px solid #2a2a2a;
+  padding: 14px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
 }
 
@@ -743,68 +918,114 @@ header h1 {
 }
 
 .setting-item label {
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  color: #adb5bd;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 1px;
   font-family: 'Courier New', monospace;
 }
 
 .api-key-input {
-  padding: 8px 12px;
-  border: 1px solid #2a2a2a;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-family: 'Courier New', monospace;
-  background: #1a1a1a;
-  color: #e9ecef;
-  transition: border-color 0.2s ease;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
 }
 
 .api-key-input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+/* Theme Select */
+.theme-select {
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 0.95rem;
+  font-family: 'Courier New', monospace;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.theme-select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+/* Cache Controls */
+.cache-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cache-count {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-family: 'Courier New', monospace;
+  flex: 1;
+  min-width: 120px;
 }
 
 .btn-small {
-  padding: 8px 16px;
-  background: #667eea;
+  padding: 10px 18px;
+  background: var(--accent-primary);
   color: white;
   border: none;
   border-radius: 4px;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: all 0.2s ease;
   text-transform: uppercase;
   letter-spacing: 1px;
   font-family: 'Courier New', monospace;
+  white-space: nowrap;
 }
 
 .btn-small:hover {
-  background: #764ba2;
+  background: var(--accent-hover);
 }
 
 .btn-small:active {
-  background: #5568d3;
+  background: var(--accent-hover);
+  transform: scale(0.98);
+}
+
+.btn-small.btn-danger {
+  background: var(--danger-color);
+}
+
+.btn-small.btn-danger:hover {
+  background: #dc2626;
 }
 
 .setting-status {
-  padding: 8px 12px;
-  background: #1a1a1a;
-  border: 1px solid #2a2a2a;
+  padding: 10px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   margin-bottom: 8px;
 }
 
 .status-text {
-  font-size: 0.85rem;
-  color: #adb5bd;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
 }
 
 .status-text.success {
-  color: #28a745;
+  color: var(--success-color);
   font-weight: 600;
 }
 
@@ -814,14 +1035,14 @@ header h1 {
 }
 
 .setting-help {
-  padding-top: 8px;
-  border-top: 1px solid #2a2a2a;
+  padding-top: 10px;
+  border-top: 1px solid #333333;
 }
 
 .setting-help small {
-  font-size: 0.8rem;
-  color: #adb5bd;
-  line-height: 1.4;
+  font-size: 0.9rem;
+  color: #c5cdd5;
+  line-height: 1.5;
 }
 
 .setting-help a {
@@ -851,9 +1072,9 @@ header h1 {
   height: 70px;
   display: flex;
   align-items: center;
-  font-size: 0.9rem;
-  color: #adb5bd;
-  font-weight: 500;
+  font-size: 1rem;
+  color: #c5cdd5;
+  font-weight: 600;
   font-family: 'Courier New', monospace;
 }
 
@@ -871,9 +1092,9 @@ header h1 {
 .file-label {
   width: 70px;
   text-align: center;
-  font-size: 0.9rem;
-  color: #adb5bd;
-  font-weight: 500;
+  font-size: 1rem;
+  color: #c5cdd5;
+  font-weight: 600;
   font-family: 'Courier New', monospace;
 }
 
@@ -896,19 +1117,19 @@ header h1 {
 }
 
 .nav-btn {
-  padding: 4px 10px;
-  background: #0d0d0d;
-  border: 1px solid #2a2a2a;
+  padding: 6px 12px;
+  background: #121212;
+  border: 1px solid #333333;
   border-radius: 4px;
   cursor: pointer;
   font-size: 1rem;
-  color: #adb5bd;
+  color: #c5cdd5;
   transition: all 0.2s ease;
   font-family: 'Courier New', monospace;
 }
 
 .nav-btn:hover:not(:disabled) {
-  background: #1a1a1a;
+  background: #1e1e1e;
   border-color: #667eea;
   color: #667eea;
 }
@@ -919,14 +1140,18 @@ header h1 {
 }
 
 .analysis-counter {
-  font-size: 0.85rem;
-  color: #adb5bd;
+  font-size: 0.9rem;
+  color: #c5cdd5;
   min-width: 60px;
   text-align: center;
   font-family: 'Courier New', monospace;
 }
 
 @media (max-width: 768px) {
+  body {
+    font-size: 15px;
+  }
+
   .chess-board {
     grid-template-columns: repeat(8, 50px);
     grid-template-rows: repeat(8, 50px);
@@ -940,12 +1165,12 @@ header h1 {
 
   .rank-label {
     height: 50px;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
   }
 
   .file-label {
     width: 50px;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
   }
 
   header h1 {
@@ -957,7 +1182,48 @@ header h1 {
   }
 
   .guide-panel {
+    position: relative;
+    top: auto;
+    right: auto;
     width: 100%;
-    min-width: auto;
+    max-height: none;
+    margin-top: 20px;
+  }
+
+  /* Disable drag on mobile */
+  .guide-header {
+    cursor: default;
+  }
+
+  .guide-header:active {
+    cursor: default;
+  }
+
+  .guide-header::before {
+    display: none;
+  }
+
+  .control-group label {
+    font-size: 0.9rem;
+  }
+
+  .control-select {
+    font-size: 0.95rem;
+  }
+
+  .btn {
+    font-size: 1rem;
+  }
+
+  .move-entry {
+    font-size: 0.95rem;
+  }
+
+  .guide-section h3 {
+    font-size: 1.05rem;
+  }
+
+  .analysis-card-content {
+    font-size: 0.95rem;
   }
 }

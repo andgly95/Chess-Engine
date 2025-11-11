@@ -35,21 +35,37 @@ export class StockfishEngine {
       // Create Web Worker pointing to stockfish WASM file
       // Use the lite single-threaded version for better browser compatibility
       const stockfishPath = './stockfish/stockfish-17.1-lite-single-03e3232.js';
+      console.log('Initializing Stockfish from:', stockfishPath);
+
       this.engine = new Worker(stockfishPath);
 
+      this.engine.onerror = (error) => {
+        console.error('Stockfish Worker error:', error);
+        this.initialized = false;
+      };
+
       this.engine.onmessage = (event) => {
+        console.log('Stockfish message:', event.data);
         this.handleEngineMessage(event.data);
       };
 
-      // Send initial UCI commands
+      // Send initial UCI commands with timeout
+      const initTimeout = setTimeout(() => {
+        console.error('Stockfish initialization timeout');
+        this.initialized = false;
+      }, 10000);
+
       await this.sendCommand('uci');
       await this.waitForReady();
       await this.sendCommand('setoption name MultiPV value 5'); // Get top 5 moves
+
+      clearTimeout(initTimeout);
       this.initialized = true;
-      console.log('Stockfish engine initialized successfully');
+      console.log('✅ Stockfish engine initialized successfully');
     } catch (error) {
-      console.error('Failed to initialize Stockfish:', error);
-      console.log('Stockfish integration will be disabled. The app will still work without it.');
+      console.error('❌ Failed to initialize Stockfish:', error);
+      console.log('App will continue without Stockfish analysis.');
+      this.initialized = false;
       // Don't throw - allow app to work without Stockfish
     }
   }
@@ -122,8 +138,11 @@ export class StockfishEngine {
     depth: number = 15,
     timeMs: number = 1000
   ): Promise<StockfishAnalysis> {
+    console.log('🔧 Stockfish: analyzePosition called with FEN:', fen);
+    console.log('🔧 Stockfish: Initialized?', this.initialized, 'Engine?', !!this.engine);
+
     if (!this.initialized || !this.engine) {
-      console.warn('Stockfish engine not initialized, returning empty analysis');
+      console.warn('⚠️ Stockfish: Engine not initialized, returning empty analysis');
       return {
         bestMoves: [],
         evaluation: 0,
@@ -132,17 +151,24 @@ export class StockfishEngine {
     }
 
     // Set up position
+    console.log('🔧 Stockfish: Setting position...');
     await this.sendCommand(`position fen ${fen}`);
 
     // Start analysis
+    console.log('🔧 Stockfish: Starting analysis with depth', depth, 'and time', timeMs);
     this.messageBuffer = '';
     this.engine.postMessage(`go depth ${depth} movetime ${timeMs}`);
 
     // Wait for analysis to complete
     await new Promise((resolve) => setTimeout(resolve, timeMs + 500));
 
+    console.log('🔧 Stockfish: Analysis complete, buffer length:', this.messageBuffer.length);
+    console.log('🔧 Stockfish: Buffer preview:', this.messageBuffer.substring(0, 500));
+
     // Parse results
-    return this.parseAnalysis(this.messageBuffer);
+    const result = this.parseAnalysis(this.messageBuffer);
+    console.log('🔧 Stockfish: Parsed result:', result);
+    return result;
   }
 
   /**
@@ -181,13 +207,15 @@ export class StockfishEngine {
       }
 
       // Parse principal variation (best move sequence)
-      const pvMatch = line.match(/pv (.+)$/);
+      // Use space before 'pv' to avoid matching 'multipv'
+      const pvMatch = line.match(/ pv (.+)$/);
       if (!pvMatch) continue;
 
       const pvMoves = pvMatch[1].split(' ').filter(m => m.length > 0);
       const bestMove = pvMoves[0];
 
-      if (bestMove) {
+      // Validate bestMove is a proper UCI move (at least 4 chars: e.g., e2e4)
+      if (bestMove && bestMove.length >= 4) {
         moveMap.set(bestMove, {
           move: bestMove,
           score: score,
@@ -199,6 +227,8 @@ export class StockfishEngine {
         if (multipvMatch[1] === '1') {
           overallEval = score;
         }
+      } else if (bestMove) {
+        console.warn('⚠️ Skipping invalid UCI move from Stockfish:', bestMove, 'in line:', line);
       }
     }
 
@@ -288,6 +318,12 @@ export class StockfishEngine {
    * Convert UCI move to human-readable format
    */
   uciToAlgebraic(uciMove: string, board: Board): string {
+    // Validate input
+    if (!uciMove || uciMove.length < 4) {
+      console.warn('⚠️ Invalid UCI move:', uciMove);
+      return uciMove || '???';
+    }
+
     // UCI format: e2e4, e7e5q (with promotion)
     const fromFile = uciMove[0];
     const fromRank = uciMove[1];

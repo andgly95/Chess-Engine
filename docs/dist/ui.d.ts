@@ -6,6 +6,8 @@ export declare class ChessUI {
     private historyElement;
     private promotionModal;
     private guideContent;
+    private evalBarFill;
+    private evalScore;
     private selectedSquare;
     private validMoves;
     private ai;
@@ -18,6 +20,9 @@ export declare class ChessUI {
     private currentAnalysisIndex;
     constructor(game: ChessGame);
     private setupEventListeners;
+    private setupDraggablePanel;
+    private applyTheme;
+    private updateCacheCount;
     private updateApiKeyStatus;
     private navigateAnalysis;
     private displayCurrentAnalysis;
@@ -39,4 +44,10 @@ export declare class ChessUI {
     private renderGuide;
     private renderOpeningProgression;
     private analyzeMoveWithClaude;
+    /**
+     * Update evaluation bar based on Stockfish evaluation
+     * @param evaluation - Centipawn evaluation (positive = white advantage)
+     * @param mate - Mate in X moves (optional)
+     */
+    private updateEvaluationBar;
 }
