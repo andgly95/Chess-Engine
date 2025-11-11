@@ -6,6 +6,7 @@ import { getPieceSymbol, positionToNotation } from './board.js';
 import { findKing } from './piece.js';
 import { ChessAI, Difficulty } from './ai.js';
 import { ChessCoach } from './coach.js';
+import { Chess3DRenderer } from './chess3d.js';
 
 interface MoveAnalysisEntry {
   moveNumber: number;
@@ -20,6 +21,7 @@ interface MoveAnalysisEntry {
 export class ChessUI {
   private game: ChessGame;
   private boardElement: HTMLElement;
+  private board3DElement: HTMLElement;
   private statusElement: HTMLElement;
   private historyElement: HTMLElement;
   private promotionModal: HTMLElement;
@@ -36,10 +38,13 @@ export class ChessUI {
   private isGuideVisible: boolean = true;
   private moveAnalyses: MoveAnalysisEntry[] = [];
   private currentAnalysisIndex: number = -1;
+  private viewMode: '2d' | '3d' = '2d';
+  private renderer3D: Chess3DRenderer | null = null;
 
   constructor(game: ChessGame) {
     this.game = game;
     this.boardElement = document.getElementById('chess-board')!;
+    this.board3DElement = document.getElementById('chess-board-3d')!;
     this.statusElement = document.getElementById('game-status')!;
     this.historyElement = document.getElementById('move-history')!;
     this.promotionModal = document.getElementById('promotion-modal')!;
@@ -195,6 +200,22 @@ export class ChessUI {
       });
     }
 
+    // Setup view mode switcher
+    const viewModeSelect = document.getElementById('view-mode-select') as HTMLSelectElement;
+    if (viewModeSelect) {
+      // Load saved view mode
+      const savedViewMode = localStorage.getItem('viewMode') || '2d';
+      this.viewMode = savedViewMode as '2d' | '3d';
+      viewModeSelect.value = savedViewMode;
+      this.switchViewMode(this.viewMode);
+
+      viewModeSelect.addEventListener('change', () => {
+        this.viewMode = viewModeSelect.value as '2d' | '3d';
+        localStorage.setItem('viewMode', this.viewMode);
+        this.switchViewMode(this.viewMode);
+      });
+    }
+
     // Setup cache controls
     const clearCacheBtn = document.getElementById('clear-cache-btn');
     if (clearCacheBtn) {
@@ -303,6 +324,68 @@ export class ChessUI {
       document.body.classList.add('light-theme');
     } else {
       document.body.classList.remove('light-theme');
+    }
+  }
+
+  private switchViewMode(mode: '2d' | '3d'): void {
+    if (mode === '3d') {
+      // Hide 2D board
+      this.boardElement.style.display = 'none';
+      this.board3DElement.style.display = 'block';
+
+      // Initialize 3D renderer if not already done
+      if (!this.renderer3D) {
+        this.renderer3D = new Chess3DRenderer(this.board3DElement);
+        this.renderer3D.onSquareClick((row, col) => {
+          this.handleSquareClick(row, col);
+        });
+      }
+
+      // Render the current board state in 3D
+      this.render3DBoard();
+    } else {
+      // Hide 3D board
+      this.board3DElement.style.display = 'none';
+      this.boardElement.style.display = 'grid';
+
+      // Clean up 3D renderer if it exists
+      if (this.renderer3D) {
+        this.renderer3D.dispose();
+        this.renderer3D = null;
+      }
+
+      // Re-render 2D board
+      this.renderBoard();
+    }
+  }
+
+  private render3DBoard(): void {
+    if (!this.renderer3D) return;
+
+    const state = this.game.getState();
+
+    // Render the board with pieces
+    this.renderer3D.render(state.board);
+
+    // Clear previous highlights
+    this.renderer3D.clearHighlights();
+
+    // Highlight selected square
+    if (this.selectedSquare) {
+      this.renderer3D.highlightSquare(this.selectedSquare.row, this.selectedSquare.col, 'selected');
+    }
+
+    // Highlight valid moves
+    for (const move of this.validMoves) {
+      this.renderer3D.highlightSquare(move.row, move.col, 'valid');
+    }
+
+    // Highlight king in check
+    if (state.isCheck) {
+      const kingPos = findKing(state.board, state.currentTurn);
+      if (kingPos) {
+        this.renderer3D.highlightSquare(kingPos.row, kingPos.col, 'check');
+      }
     }
   }
 
@@ -461,6 +544,12 @@ export class ChessUI {
   }
 
   private renderBoard(): void {
+    // If in 3D mode, use 3D renderer instead
+    if (this.viewMode === '3d') {
+      this.render3DBoard();
+      return;
+    }
+
     this.boardElement.innerHTML = '';
     const state = this.game.getState();
 
